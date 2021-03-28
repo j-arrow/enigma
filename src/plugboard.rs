@@ -1,0 +1,5 @@
+struct Plugboard {
+}
+
+impl Plugboard {
+}
