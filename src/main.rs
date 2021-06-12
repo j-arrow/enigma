@@ -3,57 +3,20 @@ use crate::rotors::rotor_chain::RotorChain;
 use crate::plugboard::Plugboard;
 use crate::reflector::Reflector;
 use crate::entry_disk::EntryDisk;
+use crate::enigma::Enigma;
+use simple_logger::SimpleLogger;
+use log::{info};
 
 mod data;
 mod rotors;
 mod reflector;
 mod plugboard;
 mod entry_disk;
-
-// GLOSSARY:
-// reflector = UKW
-// entry disc = ETW
-
-struct Enigma {
-    entry_disk: EntryDisk,
-    plugboard: Plugboard,
-    rotor_chain: RotorChain,
-    reflector: Reflector
-}
-impl Enigma {
-    fn new(entry_disk: EntryDisk, plugboard: Plugboard, rotor_chain: RotorChain, reflector: Reflector) -> Enigma {
-        Enigma {
-            entry_disk,
-            plugboard,
-            rotor_chain,
-            reflector
-        }
-    }
-
-    fn encode(&mut self, msg: &str) -> String {
-        let mut v: Vec<char> = Vec::new();
-        for c in msg.chars() {
-            self.rotor_chain.rotate();
-
-            let c_encoded = self.plugboard.encode_from_right(c);
-            let c_encoded = self.entry_disk.encode(c_encoded);
-            let c_encoded = self.rotor_chain.encode_from_right(c_encoded);
-            let c_encoded = self.reflector.encode(c_encoded);
-            let c_encoded = self.rotor_chain.encode_from_left(c_encoded);
-            let c_encoded = self.entry_disk.encode(c_encoded);
-            let c_encoded = self.plugboard.encode_from_left(c_encoded);
-
-            v.push(c_encoded);
-
-            println!();
-        }
-        v.iter().collect()
-    }
-}
-
-
+mod enigma;
 
 fn main() {
+    SimpleLogger::new().init().unwrap();
+
     let entry_disk = EntryDisk::identity();
 
     let mut plugboard = Plugboard::identity();
@@ -75,9 +38,9 @@ fn main() {
     let mut enigma = Enigma::new(entry_disk, plugboard, rotor_chain, reflector);
 
     let msg = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
-    println!("====== Plaintext:    {}", msg);
+    info!("====== Plaintext:    {}", msg);
     let encoded = enigma.encode(msg);
-    println!("====== Encoded:    {}", encoded);
+    info!("====== Encoded:    {}", encoded);
 
     // "QSMCXSNGTQSPWGGOQDJHVRRIELKTIGQQKOMBOYOUVGDHTCOEEWKNHHDCOVQZBVBBFSPQQO"
     // "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"

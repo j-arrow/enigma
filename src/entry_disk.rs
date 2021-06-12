@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use crate::data::ALPHABET;
 
 pub struct EntryDisk {
-    mapping: BTreeMap<char, char>
+    alphabet: &'static str
 }
 
 impl EntryDisk {
@@ -10,24 +10,19 @@ impl EntryDisk {
         EntryDisk::new(ALPHABET)
     }
 
-    fn new(setting: &str) -> EntryDisk {
-        if setting.len() != ALPHABET.len() {
-            panic!(
-                "Entry disk alphabet must be of same length and contain same characters as '{}'",
-                ALPHABET
-            );
-        }
-        let mut mapping: BTreeMap<char, char> = BTreeMap::new();
-        for (i, c) in ALPHABET.chars().enumerate() {
-            mapping.insert(c, setting.chars().nth(i).unwrap());
-        }
+    fn new(alphabet: &'static str) -> EntryDisk {
         EntryDisk {
-            mapping
+            alphabet
         }
     }
 
-    pub fn encode(&self, i: u8) -> u8 {
-        // TODO
-        i
+    pub fn encode_from_right(&self, i: u8) -> u8 {
+        let character = ALPHABET.chars().nth(i as usize).unwrap();
+        self.alphabet.find(character).unwrap() as u8
+    }
+
+    pub fn encode_from_left(&self, i: u8) -> u8 {
+        let character = self.alphabet.chars().nth(i as usize).unwrap();
+        ALPHABET.find(character).unwrap() as u8
     }
 }

@@ -5,5 +5,7 @@ authors = ["Rafal Ochyra <aldaron127_dev@o2.pl>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+# logging
+log = { version ="0.4.14", features = ["max_level_debug", "release_max_level_info"] }
+simple_logger = "1.11.0"

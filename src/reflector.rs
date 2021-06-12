@@ -1,4 +1,5 @@
 use crate::data::ALPHABET;
+use log::{debug};
 
 pub struct Reflector {
     setting: &'static str
@@ -30,7 +31,7 @@ impl Reflector {
     pub fn encode(&self, i: u8) -> u8 {
         let c = self.setting.chars().nth(i as usize).unwrap();
         let idx = ALPHABET.find(c).unwrap();
-        println!("   --- next_encoded: {}", c);
+        debug!("   --- reflector: {}", c);
         idx as u8
     }
 }
