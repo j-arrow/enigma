@@ -1,5 +1,4 @@
 use crate::rotors::rotor::Rotor;
-use crate::data::ALPHABET;
 use log::{debug};
 
 pub struct RotorChain {

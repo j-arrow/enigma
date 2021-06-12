@@ -6,12 +6,15 @@ pub struct Reflector {
 }
 
 impl Reflector {
+    #[allow(dead_code)]
     pub fn a() -> Reflector {
         Reflector::new(REFLECTOR_A)
     }
+    #[allow(dead_code)]
     pub fn b() -> Reflector {
         Reflector::new(REFLECTOR_B)
     }
+    #[allow(dead_code)]
     pub fn c() -> Reflector {
         Reflector::new(REFLECTOR_C)
     }
@@ -37,7 +40,10 @@ impl Reflector {
 }
 
 // ---- names: Heer, Enigma A, Heeres, Wehrmacht, Service Enigma, Army/GAF machine
+#[allow(dead_code)]
 const REFLECTOR_A: &str     = "EJMZALYXVBWFCRQUONTSPIKHGD";
+#[allow(dead_code)]
 const REFLECTOR_B: &str     = "YRUHQSLDPXNGOKMIEBFZCWVJAT";
+#[allow(dead_code)]
 const REFLECTOR_C: &str     = "FVPJIAOYEDRZXWGCTKUQSBNMHL";
 // ----

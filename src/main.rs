@@ -19,7 +19,7 @@ fn main() {
 
     let entry_disk = EntryDisk::identity();
 
-    let mut plugboard = Plugboard::identity();
+    let plugboard = Plugboard::identity();
     // plugboard.connect('A', 'B');
     // plugboard.connect('C', 'D');
     // plugboard.connect('E', 'F');
@@ -30,7 +30,7 @@ fn main() {
     r1.offset_by(2);
     let mut r2 = Rotor::enigma_i_wehrmacht_ii();
     r2.offset_by(1);
-    let mut r3 = Rotor::enigma_i_wehrmacht_iii();
+    let r3 = Rotor::enigma_i_wehrmacht_iii();
     let rotor_chain = RotorChain::new(r1, r2, r3);
 
     let reflector = Reflector::b();
