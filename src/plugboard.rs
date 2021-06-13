@@ -36,16 +36,15 @@ impl Plugboard {
         let disconnected_1 = self.mapping.insert(from, to);
         if let Some(c) = disconnected_1 {
             if !c.eq(&from) && !c.eq(&to) {
-                let current_value = self.mapping.get_mut(&c).unwrap();
-                *current_value = c;
+                *self.mapping.get_mut(&c).unwrap() = c;
             }
         }
+
         let disconnected_2 = self.mapping.insert(to, from);
         if !disconnected_1.eq(&disconnected_2) {
             if let Some(c) = disconnected_2 {
                 if !c.eq(&from) && !c.eq(&to) {
-                    let current_value = self.mapping.get_mut(&c).unwrap();
-                    *current_value = c;
+                    *self.mapping.get_mut(&c).unwrap() = c;
                 }
             }
         }
