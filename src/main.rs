@@ -19,12 +19,12 @@ fn main() {
 
     let entry_disk = EntryDisk::identity();
 
-    let plugboard = Plugboard::identity();
-    // plugboard.connect('A', 'B');
-    // plugboard.connect('C', 'D');
-    // plugboard.connect('E', 'F');
-    // plugboard.connect('G', 'H');
-    // plugboard.connect('I', 'J');
+    let mut plugboard = Plugboard::identity();
+    plugboard.connect('A', 'B');
+    plugboard.connect('C', 'D');
+    plugboard.connect('E', 'F');
+    plugboard.connect('G', 'H');
+    plugboard.connect('I', 'J');
 
     let mut r1 = Rotor::enigma_i_wehrmacht_i();
     r1.offset_by(2);

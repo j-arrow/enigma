@@ -51,9 +51,14 @@ mod test {
     use super::*;
     use crate::rotors::rotor::Rotor;
     use simple_logger::SimpleLogger;
+    use std::sync::Once;
+
+    static START: Once = Once::new();
 
     fn init() {
-        SimpleLogger::new().init().unwrap();
+        START.call_once(|| {
+            SimpleLogger::new().init().unwrap();
+        });
     }
 
     #[test]
@@ -139,6 +144,8 @@ mod test {
             WHENA NUNKN OWNPR INTER TOOKA GALLE YOFTY PEAND SCRAM BLEDI TTOMA KEATY PESPE CIMEN BOOK"
         );
     }
+
+    // TODO add tests for enigma encoding with plugboard changes
 
     fn test_enigma_i(
         initial_rotor_settings: &str,
