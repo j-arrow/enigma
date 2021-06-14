@@ -65,22 +65,14 @@ impl Plugboard {
     }
 
     pub fn encode_from_right(&self, letter: char) -> u8 {
-        // TODO fix this method
-        for (i, entry) in self.mapping.iter().enumerate() {
-            if letter == *entry.0 {
-                return i as u8;
-            }
-        }
-        panic!("Plugboard does not support '{}' character", letter);
+        let encoded = self.mapping.get(&letter)
+            .expect(&format!("Plugboard does not support '{}' character", letter));
+        ALPHABET.find(*encoded).unwrap() as u8
     }
 
     pub fn encode_from_left(&self, i: u8) -> char {
-        for (idx, entry) in self.mapping.iter().enumerate() {
-            if idx == i as usize {
-                return *entry.1;
-            }
-        }
-        panic!("Plugboard does not support '{}' index", i);
+        let encoded = ALPHABET.chars().nth(i as usize).unwrap();
+        *self.mapping.get(&encoded).unwrap()
     }
 }
 
@@ -114,5 +106,42 @@ mod tests {
         expected_mapping.insert('B', 'B');
         expected_mapping.insert('C', 'C');
         assert_eq!(expected_mapping, plugboard.mapping);
+    }
+
+    #[test]
+    fn expect_disconnect_executed_by_connecting_same_character() {
+        let mut plugboard = Plugboard::identity();
+        let mut expected_mapping = plugboard.mapping.clone();
+
+        plugboard.connect('A', 'B');
+        expected_mapping.insert('A', 'B');
+        expected_mapping.insert('B', 'A');
+        assert_eq!(expected_mapping, plugboard.mapping);
+
+        plugboard.connect('B', 'B');
+        expected_mapping.insert('A', 'A');
+        expected_mapping.insert('B', 'B');
+        assert_eq!(expected_mapping, plugboard.mapping);
+    }
+
+    #[test]
+    #[should_panic(expected = "Character '1' is not in supported alphabet")]
+    fn panic_on_connect_for_unsupported_from_character() {
+        let mut plugboard = Plugboard::identity();
+        plugboard.connect('1', 'A');
+    }
+
+    #[test]
+    #[should_panic(expected = "Character '2' is not in supported alphabet")]
+    fn panic_on_connect_for_unsupported_to_character() {
+        let mut plugboard = Plugboard::identity();
+        plugboard.connect('A', '2');
+    }
+
+    #[test]
+    #[should_panic(expected = "Character '3' is not in supported alphabet")]
+    fn panic_on_disconnect_for_unsupported_character() {
+        let mut plugboard = Plugboard::identity();
+        plugboard.disconnect('3');
     }
 }

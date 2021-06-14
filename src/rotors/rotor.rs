@@ -214,6 +214,61 @@ mod tests {
         assert_eq!(Rotor::offset_negatively(10, 100), 14);
         assert_eq!(Rotor::offset_negatively(3, 78), 3);
     }
+
+    mod turn_to_character {
+        use super::*;
+
+        #[test]
+        #[should_panic(expected = "Character 'a' is not in supported alphabet")]
+        fn test_1() {
+            let mut r = Rotor::enigma_i_wehrmacht_i();
+            r.turn_to_character('a');
+        }
+
+        #[test]
+        fn test_2() {
+            let mut r = Rotor::new("ABCDEF", "E");
+            assert_eq!(r.rotate(), false);
+            r.turn_to_character('E');
+            assert_eq!(r.rotate(), true);
+        }
+    }
+
+    mod offset_by {
+        use super::*;
+
+        #[test]
+        fn test_1() {
+            let mut r = Rotor::enigma_i_wehrmacht_i();
+            assert_eq!(r.current_offset, 0);
+            r.offset_by(10);
+            assert_eq!(r.current_offset, 10);
+        }
+
+        #[test]
+        fn test_2() {
+            let mut r = Rotor::enigma_i_wehrmacht_i();
+            assert_eq!(r.current_offset, 0);
+            r.offset_by(26);
+            assert_eq!(r.current_offset, 0);
+        }
+
+        #[test]
+        fn test_3() {
+            let mut r = Rotor::enigma_i_wehrmacht_i();
+            assert_eq!(r.current_offset, 0);
+            r.offset_by(30);
+            assert_eq!(r.current_offset, 4);
+        }
+
+        #[test]
+        fn test_4() {
+            let mut r = Rotor::enigma_i_wehrmacht_i();
+            assert_eq!(r.current_offset, 0);
+            r.offset_by(-6);
+            assert_eq!(r.current_offset, 20);
+        }
+    }
 }
 
 // ---- names: Heer, Enigma A, Heeres, Wehrmacht, Service Enigma, Army/GAF machine

@@ -62,7 +62,7 @@ mod test {
     }
 
     #[test]
-    fn test_same_character_sequence() {
+    fn test_encoding_for_same_character_sequence() {
         init();
 
         let initial_rotor_settings = "AAA";
@@ -79,7 +79,7 @@ mod test {
     }
 
     #[test]
-    fn test_alphabet_sequence() {
+    fn test_encoding_for_alphabet_sequence() {
         init();
 
         let initial_rotor_settings = "AAA";
@@ -96,7 +96,7 @@ mod test {
     }
 
     #[test]
-    fn test_double_set_sequence_rotations_1() {
+    fn test_encoding_for_double_set_sequence_rotations_1() {
         init();
 
         let initial_rotor_settings = "AAA";
@@ -121,7 +121,7 @@ mod test {
     }
 
     #[test]
-    fn test_double_set_sequence_rotations_2() {
+    fn test_encoding_for_double_set_sequence_rotations_2() {
         init();
 
         let initial_rotor_settings = "GDU";
@@ -145,16 +145,59 @@ mod test {
         );
     }
 
-    // TODO add tests for enigma encoding with plugboard changes
+    mod test_encoding_for_custom_plugboard {
+        use super::*;
+
+        #[test]
+        fn test_1() {
+            let mut plugboard = Plugboard::identity();
+            plugboard.connect('A', 'B');
+            plugboard.connect('E', 'F');
+            plugboard.connect('H', 'I');
+            plugboard.connect('N', 'O');
+            plugboard.connect('T', 'U');
+            plugboard.connect('X', 'Y');
+
+            test_enigma_i_with_custom_plugboard(
+                "AAA",
+                plugboard,
+                "ABCDEFGHIJKLMNOPQRSTUWXYZZYXWUTSRQPONMLKJIHGFEDCBAABCDEFGHIJKLMNOPQRST",
+                "BDFLG OZAUW BRYCN AYNRY TJGEI FFAAJ FEFOS PVKCM NLRYV GKFFK UYQGK YJYBP ZXCZY AGLYF",
+            );
+        }
+
+        #[test]
+        fn test_2() {
+            let mut plugboard = Plugboard::identity();
+            plugboard.connect('A', 'E');
+            plugboard.connect('G', 'L');
+            plugboard.connect('Q', 'X');
+
+            test_enigma_i_with_custom_plugboard(
+                "EJO",
+                plugboard,
+                "ABCDEFGHIJKLMNOPQRSTUWXYZZYXWUTSRQPONMLKJIHGFEDCBAABCDEFGHIJKLMNOPQRST",
+                "SQBZS UPLCQ JPOXV IBYKH HFRZG HKTAG VZPWI MVEES BHRLR GQFCG PPRLX JCBTN QMBQK EETFX",
+            );
+        }
+    }
 
     fn test_enigma_i(
         initial_rotor_settings: &str,
         decoded: &str,
-        encoded: &str)
-    {
-        let entry_disk = EntryDisk::identity();
-
+        encoded: &str
+    ) {
         let plugboard = Plugboard::identity();
+        test_enigma_i_with_custom_plugboard(initial_rotor_settings, plugboard, decoded, encoded);
+    }
+
+    fn test_enigma_i_with_custom_plugboard(
+        initial_rotor_settings: &str,
+        plugboard: Plugboard,
+        decoded: &str,
+        encoded: &str
+    ) {
+        let entry_disk = EntryDisk::identity();
 
         let mut r1 = Rotor::enigma_i_wehrmacht_i();
         r1.turn_to_character(initial_rotor_settings.chars().nth(0).unwrap());
