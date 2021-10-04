@@ -7,15 +7,15 @@ pub struct Reflector {
 
 impl Reflector {
     #[allow(dead_code)]
-    pub fn a() -> Reflector {
+    pub(crate) fn a() -> Reflector {
         Reflector::new(REFLECTOR_A)
     }
     #[allow(dead_code)]
-    pub fn b() -> Reflector {
+    pub(crate) fn b() -> Reflector {
         Reflector::new(REFLECTOR_B)
     }
     #[allow(dead_code)]
-    pub fn c() -> Reflector {
+    pub(crate) fn c() -> Reflector {
         Reflector::new(REFLECTOR_C)
     }
 
@@ -31,7 +31,7 @@ impl Reflector {
         }
     }
 
-    pub fn encode(&self, i: u8) -> u8 {
+    pub(crate) fn encode(&self, i: u8) -> u8 {
         let c = self.setting.chars().nth(i as usize).unwrap();
         let idx = ALPHABET.find(c).unwrap();
         debug!("   --- reflector: {}", c);

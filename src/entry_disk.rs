@@ -5,7 +5,7 @@ pub struct EntryDisk {
 }
 
 impl EntryDisk {
-    pub fn identity() -> EntryDisk {
+    pub(crate) fn identity() -> EntryDisk {
         EntryDisk::new(ALPHABET)
     }
 
@@ -16,13 +16,13 @@ impl EntryDisk {
         }
     }
 
-    pub fn encode_from_right(&self, i: u8) -> u8 {
+    pub(crate) fn encode_from_right(&self, i: u8) -> u8 {
         let character = ALPHABET.chars().nth(i as usize)
             .expect(&format!("Entry disk contains no character at index {}", i));
         self.alphabet.find(character).unwrap() as u8
     }
 
-    pub fn encode_from_left(&self, i: u8) -> u8 {
+    pub(crate) fn encode_from_left(&self, i: u8) -> u8 {
         let character = self.alphabet.chars().nth(i as usize)
             .expect(&format!("Entry disk contains no character at index {}", i));
         ALPHABET.find(character).unwrap() as u8

@@ -6,7 +6,7 @@ pub struct Plugboard {
 }
 
 impl Plugboard {
-    pub fn identity() -> Plugboard {
+    pub(crate) fn identity() -> Plugboard {
         let mapping = ALPHABET.chars()
             .fold(
                 BTreeMap::new(),
@@ -20,7 +20,7 @@ impl Plugboard {
         }
     }
 
-    pub fn connect(&mut self, from: char, to: char) {
+    pub(crate) fn connect(&mut self, from: char, to: char) {
         if let None = ALPHABET.find(from) {
             panic!("Character '{}' is not in supported alphabet: {}", from, ALPHABET);
         }
@@ -50,7 +50,7 @@ impl Plugboard {
         }
     }
 
-    pub fn disconnect(&mut self, char_to_disconnect: char) {
+    pub(crate) fn disconnect(&mut self, char_to_disconnect: char) {
         if let None = ALPHABET.find(char_to_disconnect) {
             panic!("Character '{}' is not in supported alphabet: {}", char_to_disconnect, ALPHABET);
         }
@@ -64,17 +64,45 @@ impl Plugboard {
         }
     }
 
-    pub fn encode_from_right(&self, letter: char) -> u8 {
+    pub(crate) fn encode_from_right(&self, letter: char) -> u8 {
         let encoded = self.mapping.get(&letter)
             .expect(&format!("Plugboard does not support '{}' character", letter));
         ALPHABET.find(*encoded).unwrap() as u8
     }
 
-    pub fn encode_from_left(&self, i: u8) -> char {
+    pub(crate) fn encode_from_left(&self, i: u8) -> char {
         let encoded = ALPHABET.chars().nth(i as usize).unwrap();
         *self.mapping.get(&encoded).unwrap()
     }
 }
+
+pub struct PlugboardConnection {
+    pub(crate) left: char,
+    pub(crate) right: char
+}
+
+impl PlugboardConnection {
+    pub(crate) fn from(character_pair: &str) -> Result<PlugboardConnection, String> {
+        if character_pair.chars().count() != 2 {
+            return Err(format!("Expected only pairs (2 values), but found: {}", character_pair));
+        }
+
+        let p0 = character_pair.chars().nth(0).unwrap();
+        let p1 = character_pair.chars().nth(1).unwrap();
+        if !ALPHABET.contains(p0) {
+            return Err(format!("Value '{}' is not allowed as part of plugboard. Allowed: {}", p0, ALPHABET));
+        }
+        if !ALPHABET.contains(p1) {
+            return Err(format!("Value '{}' is not allowed as part of plugboard. Allowed: {}", p1, ALPHABET));
+        }
+
+        Ok(PlugboardConnection {
+            left: p0,
+            right: p1
+        })
+    }
+}
+
 
 #[cfg(test)]
 mod tests {

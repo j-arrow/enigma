@@ -8,14 +8,20 @@ pub struct Rotor {
 }
 
 impl Rotor {
-    pub fn enigma_i_wehrmacht_i() -> Rotor {
+    pub(crate) fn enigma_i_wehrmacht_i() -> Rotor {
         Rotor::new(ENIGMA_I_WEHRMACHT_I_ROTOR, ENIGMA_I_WEHRMACHT_I_TURNOVER)
     }
-    pub fn enigma_i_wehrmacht_ii() -> Rotor {
+    pub(crate) fn enigma_i_wehrmacht_ii() -> Rotor {
         Rotor::new(ENIGMA_I_WEHRMACHT_II_ROTOR, ENIGMA_I_WEHRMACHT_II_TURNOVER)
     }
-    pub fn enigma_i_wehrmacht_iii() -> Rotor {
+    pub(crate) fn enigma_i_wehrmacht_iii() -> Rotor {
         Rotor::new(ENIGMA_I_WEHRMACHT_III_ROTOR, ENIGMA_I_WEHRMACHT_III_TURNOVER)
+    }
+    pub(crate) fn m3_wehrmacht_iv() -> Rotor {
+        Rotor::new(M3_WEHRMACHT_IV_ROTOR, M3_WEHRMACHT_IV_TURNOVER)
+    }
+    pub(crate) fn m3_wehrmacht_v() -> Rotor {
+        Rotor::new(M3_WEHRMACHT_V_ROTOR, M3_WEHRMACHT_V_TURNOVER)
     }
 
     fn new(alphabet: &'static str, turnover: &'static str) -> Rotor {
@@ -40,7 +46,7 @@ impl Rotor {
         }
     }
 
-    pub fn encode_from_right(&self, i: u8) -> u8 {
+    pub(crate) fn encode_from_right(&self, i: u8) -> u8 {
         let offseted_i = Rotor::offset_positively(i, self.current_offset);
         let next_encoded = self.alphabet.chars().nth(offseted_i as usize).unwrap();
         debug!("   --- rotor_r: {}", next_encoded);
@@ -49,7 +55,7 @@ impl Rotor {
         next_i
     }
 
-    pub fn encode_from_left(&self, i: u8) -> u8 {
+    pub(crate) fn encode_from_left(&self, i: u8) -> u8 {
         let offseted_i = Rotor::offset_positively(i, self.current_offset);
         let next_encoded = ALPHABET.chars().nth(offseted_i as usize).unwrap();
         let next_i = self.alphabet.find(next_encoded).unwrap();
@@ -58,14 +64,14 @@ impl Rotor {
         next_i
     }
 
-    pub fn turn_to_character(&mut self, character: char) {
+    pub(crate) fn turn_to_character(&mut self, character: char) {
         self.current_offset = match ALPHABET.find(character) {
             None => panic!("Character '{}' is not in supported alphabet: {}", character, ALPHABET),
             Some(position) => position
         } as u8;
     }
 
-    pub fn rotate(&mut self) -> bool {
+    pub(crate) fn rotate(&mut self) -> bool {
         let should_rotate_next = self.turnover_offsets.contains(&self.current_offset);
         self.current_offset = Rotor::offset_positively(self.current_offset, 1);
         debug!(
@@ -78,11 +84,11 @@ impl Rotor {
         should_rotate_next
     }
 
-    pub fn is_in_turnover_position(&self) -> bool {
+    pub(crate) fn is_in_turnover_position(&self) -> bool {
         self.turnover_offsets.contains(&self.current_offset)
     }
 
-    pub fn offset_by(&mut self, offset: i8) {
+    pub(crate) fn offset_by(&mut self, offset: i8) {
         self.current_offset = if offset.is_positive() {
             Rotor::offset_positively(self.current_offset, offset as u8)
         } else {
@@ -90,7 +96,7 @@ impl Rotor {
         };
     }
 
-    pub fn get_offset_character(&self) -> char {
+    pub(crate) fn get_offset_character(&self) -> char {
         ALPHABET.chars().nth(self.current_offset as usize).unwrap()
     }
 
