@@ -1,12 +1,12 @@
-use crate::data::ALPHABET;
+use crate::enigma::SUPPORTED_ALPHABET;
 
 pub struct EntryDisk {
     alphabet: &'static str
 }
 
 impl EntryDisk {
-    pub(crate) fn identity() -> EntryDisk {
-        EntryDisk::new(ALPHABET)
+    pub fn identity() -> EntryDisk {
+        EntryDisk::new(SUPPORTED_ALPHABET)
     }
 
     fn new(alphabet: &'static str) -> EntryDisk {
@@ -17,7 +17,7 @@ impl EntryDisk {
     }
 
     pub(crate) fn encode_from_right(&self, i: u8) -> u8 {
-        let character = ALPHABET.chars().nth(i as usize)
+        let character = SUPPORTED_ALPHABET.chars().nth(i as usize)
             .expect(&format!("Entry disk contains no character at index {}", i));
         self.alphabet.find(character).unwrap() as u8
     }
@@ -25,7 +25,7 @@ impl EntryDisk {
     pub(crate) fn encode_from_left(&self, i: u8) -> u8 {
         let character = self.alphabet.chars().nth(i as usize)
             .expect(&format!("Entry disk contains no character at index {}", i));
-        ALPHABET.find(character).unwrap() as u8
+        SUPPORTED_ALPHABET.find(character).unwrap() as u8
     }
 }
 

@@ -1,5 +1,5 @@
 use std::collections::BTreeMap;
-use crate::data::ALPHABET;
+use crate::enigma::SUPPORTED_ALPHABET;
 
 pub struct Plugboard {
     mapping: BTreeMap<char, char>
@@ -7,7 +7,7 @@ pub struct Plugboard {
 
 impl Plugboard {
     pub(crate) fn identity() -> Plugboard {
-        let mapping = ALPHABET.chars()
+        let mapping = SUPPORTED_ALPHABET.chars()
             .fold(
                 BTreeMap::new(),
                 |mut acc, c| {
@@ -21,11 +21,11 @@ impl Plugboard {
     }
 
     pub(crate) fn connect(&mut self, from: char, to: char) {
-        if let None = ALPHABET.find(from) {
-            panic!("Character '{}' is not in supported alphabet: {}", from, ALPHABET);
+        if let None = SUPPORTED_ALPHABET.find(from) {
+            panic!("Character '{}' is not in supported alphabet: {}", from, SUPPORTED_ALPHABET);
         }
-        if let None = ALPHABET.find(to) {
-            panic!("Character '{}' is not in supported alphabet: {}", to, ALPHABET);
+        if let None = SUPPORTED_ALPHABET.find(to) {
+            panic!("Character '{}' is not in supported alphabet: {}", to, SUPPORTED_ALPHABET);
         }
 
         if from.eq(&to) {
@@ -51,8 +51,8 @@ impl Plugboard {
     }
 
     pub(crate) fn disconnect(&mut self, char_to_disconnect: char) {
-        if let None = ALPHABET.find(char_to_disconnect) {
-            panic!("Character '{}' is not in supported alphabet: {}", char_to_disconnect, ALPHABET);
+        if let None = SUPPORTED_ALPHABET.find(char_to_disconnect) {
+            panic!("Character '{}' is not in supported alphabet: {}", char_to_disconnect, SUPPORTED_ALPHABET);
         }
         let disconnected_value = self.mapping.insert(char_to_disconnect, char_to_disconnect);
 
@@ -67,11 +67,11 @@ impl Plugboard {
     pub(crate) fn encode_from_right(&self, letter: char) -> u8 {
         let encoded = self.mapping.get(&letter)
             .expect(&format!("Plugboard does not support '{}' character", letter));
-        ALPHABET.find(*encoded).unwrap() as u8
+        SUPPORTED_ALPHABET.find(*encoded).unwrap() as u8
     }
 
     pub(crate) fn encode_from_left(&self, i: u8) -> char {
-        let encoded = ALPHABET.chars().nth(i as usize).unwrap();
+        let encoded = SUPPORTED_ALPHABET.chars().nth(i as usize).unwrap();
         *self.mapping.get(&encoded).unwrap()
     }
 }
@@ -82,18 +82,18 @@ pub struct PlugboardConnection {
 }
 
 impl PlugboardConnection {
-    pub(crate) fn from(character_pair: &str) -> Result<PlugboardConnection, String> {
+    pub fn create(character_pair: &str) -> Result<PlugboardConnection, String> {
         if character_pair.chars().count() != 2 {
             return Err(format!("Expected only pairs (2 values), but found: {}", character_pair));
         }
 
         let p0 = character_pair.chars().nth(0).unwrap();
         let p1 = character_pair.chars().nth(1).unwrap();
-        if !ALPHABET.contains(p0) {
-            return Err(format!("Value '{}' is not allowed as part of plugboard. Allowed: {}", p0, ALPHABET));
+        if !SUPPORTED_ALPHABET.contains(p0) {
+            return Err(format!("Value '{}' is not allowed as part of plugboard. Allowed: {}", p0, SUPPORTED_ALPHABET));
         }
-        if !ALPHABET.contains(p1) {
-            return Err(format!("Value '{}' is not allowed as part of plugboard. Allowed: {}", p1, ALPHABET));
+        if !SUPPORTED_ALPHABET.contains(p1) {
+            return Err(format!("Value '{}' is not allowed as part of plugboard. Allowed: {}", p1, SUPPORTED_ALPHABET));
         }
 
         Ok(PlugboardConnection {

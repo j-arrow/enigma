@@ -1,5 +1,5 @@
-use crate::data::ALPHABET;
 use log::{debug};
+use crate::enigma::SUPPORTED_ALPHABET;
 
 pub struct Rotor {
     current_offset: u8,
@@ -8,33 +8,33 @@ pub struct Rotor {
 }
 
 impl Rotor {
-    pub(crate) fn enigma_i_wehrmacht_i() -> Rotor {
+    pub fn enigma_i_wehrmacht_i() -> Rotor {
         Rotor::new(ENIGMA_I_WEHRMACHT_I_ROTOR, ENIGMA_I_WEHRMACHT_I_TURNOVER)
     }
-    pub(crate) fn enigma_i_wehrmacht_ii() -> Rotor {
+    pub fn enigma_i_wehrmacht_ii() -> Rotor {
         Rotor::new(ENIGMA_I_WEHRMACHT_II_ROTOR, ENIGMA_I_WEHRMACHT_II_TURNOVER)
     }
-    pub(crate) fn enigma_i_wehrmacht_iii() -> Rotor {
+    pub fn enigma_i_wehrmacht_iii() -> Rotor {
         Rotor::new(ENIGMA_I_WEHRMACHT_III_ROTOR, ENIGMA_I_WEHRMACHT_III_TURNOVER)
     }
-    pub(crate) fn m3_wehrmacht_iv() -> Rotor {
+    pub fn m3_wehrmacht_iv() -> Rotor {
         Rotor::new(M3_WEHRMACHT_IV_ROTOR, M3_WEHRMACHT_IV_TURNOVER)
     }
-    pub(crate) fn m3_wehrmacht_v() -> Rotor {
+    pub fn m3_wehrmacht_v() -> Rotor {
         Rotor::new(M3_WEHRMACHT_V_ROTOR, M3_WEHRMACHT_V_TURNOVER)
     }
 
     fn new(alphabet: &'static str, turnover: &'static str) -> Rotor {
         for c in alphabet.chars() {
-            if !ALPHABET.contains(c) {
-                panic!("Alphabet error: '{}' must be a letter from set '{}'", c, ALPHABET);
+            if !SUPPORTED_ALPHABET.contains(c) {
+                panic!("Alphabet error: '{}' must be a letter from set '{}'", c, SUPPORTED_ALPHABET);
             }
         }
 
         let mut turnover_offsets: Vec<u8> = Vec::with_capacity(turnover.chars().count());
         for c in turnover.chars() {
-            let i = ALPHABET.find(c).expect(
-                &format!("Turnover error: '{}' must be a letter from set '{}'", c, ALPHABET)
+            let i = SUPPORTED_ALPHABET.find(c).expect(
+                &format!("Turnover error: '{}' must be a letter from set '{}'", c, SUPPORTED_ALPHABET)
             ) as u8;
             turnover_offsets.push(i);
         }
@@ -50,23 +50,23 @@ impl Rotor {
         let offseted_i = Rotor::offset_positively(i, self.current_offset);
         let next_encoded = self.alphabet.chars().nth(offseted_i as usize).unwrap();
         debug!("   --- rotor_r: {}", next_encoded);
-        let next_i = ALPHABET.find(next_encoded).unwrap();
+        let next_i = SUPPORTED_ALPHABET.find(next_encoded).unwrap();
         let next_i = Rotor::offset_negatively(next_i as u8, self.current_offset);
         next_i
     }
 
     pub(crate) fn encode_from_left(&self, i: u8) -> u8 {
         let offseted_i = Rotor::offset_positively(i, self.current_offset);
-        let next_encoded = ALPHABET.chars().nth(offseted_i as usize).unwrap();
+        let next_encoded = SUPPORTED_ALPHABET.chars().nth(offseted_i as usize).unwrap();
         let next_i = self.alphabet.find(next_encoded).unwrap();
-        debug!("   --- rotor_l: {}", ALPHABET.chars().nth(next_i).unwrap());
+        debug!("   --- rotor_l: {}", SUPPORTED_ALPHABET.chars().nth(next_i).unwrap());
         let next_i = Rotor::offset_negatively(next_i as u8, self.current_offset);
         next_i
     }
 
     pub(crate) fn turn_to_character(&mut self, character: char) {
-        self.current_offset = match ALPHABET.find(character) {
-            None => panic!("Character '{}' is not in supported alphabet: {}", character, ALPHABET),
+        self.current_offset = match SUPPORTED_ALPHABET.find(character) {
+            None => panic!("Character '{}' is not in supported alphabet: {}", character, SUPPORTED_ALPHABET),
             Some(position) => position
         } as u8;
     }
@@ -77,27 +77,15 @@ impl Rotor {
         debug!(
             "Rotor steps from '{}' to '{}'. Will rotate next rotor? {}",
             // character BEFORE rotation
-            ALPHABET.chars().nth(Rotor::offset_negatively(self.current_offset, 1) as usize).unwrap(),
+            SUPPORTED_ALPHABET.chars().nth(Rotor::offset_negatively(self.current_offset, 1) as usize).unwrap(),
             //character AFTER rotation
-            ALPHABET.chars().nth(self.current_offset as usize).unwrap(),
+            SUPPORTED_ALPHABET.chars().nth(self.current_offset as usize).unwrap(),
             should_rotate_next);
         should_rotate_next
     }
 
     pub(crate) fn is_in_turnover_position(&self) -> bool {
         self.turnover_offsets.contains(&self.current_offset)
-    }
-
-    pub(crate) fn offset_by(&mut self, offset: i8) {
-        self.current_offset = if offset.is_positive() {
-            Rotor::offset_positively(self.current_offset, offset as u8)
-        } else {
-            Rotor::offset_negatively(self.current_offset, (offset * -1) as u8)
-        };
-    }
-
-    pub(crate) fn get_offset_character(&self) -> char {
-        ALPHABET.chars().nth(self.current_offset as usize).unwrap()
     }
 
     fn offset_positively(offset_source: u8, offset_by: u8) -> u8 {
@@ -138,7 +126,7 @@ mod tests {
 
     #[test]
     fn test_rotation() {
-        let mut r = Rotor::new(ALPHABET, "Q");
+        let mut r = Rotor::new(SUPPORTED_ALPHABET, "Q");
         assert_eq!(r.rotate(), false);
         assert_eq!(r.rotate(), false);
         assert_eq!(r.rotate(), false);
@@ -164,7 +152,7 @@ mod tests {
 
     #[test]
     fn rotor_will_cause_turnover_on_expected_points() {
-        let mut r = Rotor::new(ALPHABET, "DGIKW");
+        let mut r = Rotor::new(SUPPORTED_ALPHABET, "DGIKW");
 
         for _ in 1..=5 {
             assert_eq!(r.rotate(), false);  // A

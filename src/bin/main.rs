@@ -2,23 +2,13 @@ use std::{io, process};
 
 use simple_logger::SimpleLogger;
 
-use crate::data::ALPHABET;
-use crate::enigma_builder::EnigmaBuilder;
-use crate::entry_disk::EntryDisk;
-use crate::plugboard::{PlugboardConnection};
-use crate::reflector::Reflector;
-use crate::rotors::rotor::Rotor;
 use chrono::{Local};
-use crate::message::Message;
-
-mod data;
-mod rotors;
-mod reflector;
-mod plugboard;
-mod entry_disk;
-mod enigma;
-mod enigma_builder;
-mod message;
+use enigma::reflector::Reflector;
+use enigma::rotors::rotor::Rotor;
+use enigma::plugboard::PlugboardConnection;
+use enigma::enigma_builder::EnigmaBuilder;
+use enigma::message::Message;
+use enigma::enigma::SUPPORTED_ALPHABET;
 
 const REFLECTOR_PARSER: fn(&str) -> Result<Reflector, String> = |input: &str| {
     if input.eq("A") {
@@ -52,7 +42,7 @@ const PLUGBOARD_PARSER: fn(&str) -> Result<Vec<PlugboardConnection>, String> = |
     let mut valid: Vec<PlugboardConnection> = vec![];
     let mut errors: Vec<String> = vec![];
     for pair in input.split(' ') {
-        let result = PlugboardConnection::from(pair);
+        let result = PlugboardConnection::create(pair);
         if let Ok(connection) = result {
             valid.push(connection);
         } else {
@@ -62,12 +52,12 @@ const PLUGBOARD_PARSER: fn(&str) -> Result<Vec<PlugboardConnection>, String> = |
     if errors.is_empty() { Ok(valid) } else { Err(errors.join(", ")) }
 };
 
-const SPECIFIC_COUNT_OF_ALPHABET_CHARACTERS_PARSER: fn(&str, u16) -> Result<String, String> =
+const SPECIFIC_COUNT_OF_SUPPORTED_ALPHABET_CHARACTERS_PARSER: fn(&str, u16) -> Result<String, String> =
     |input: &str, required_character_count: u16| {
         let mut errors: Vec<String> = vec![];
         for (i, ch) in input.chars().enumerate() {
-            if !ALPHABET.contains(ch) {
-                errors.push(format!("Character '{}' not found in allowed alphabet: {}", ch, ALPHABET));
+            if !SUPPORTED_ALPHABET.contains(ch) {
+                errors.push(format!("Character '{}' not found in allowed SUPPORTED_ALPHABET: {}", ch, SUPPORTED_ALPHABET));
             }
             if i == required_character_count as usize {
                 errors.push(format!("Found more than {} allowed characters", required_character_count));
@@ -75,14 +65,14 @@ const SPECIFIC_COUNT_OF_ALPHABET_CHARACTERS_PARSER: fn(&str, u16) -> Result<Stri
             }
         }
         if errors.is_empty() { Ok(input.to_string()) } else { Err(errors.join(", ")) }
-};
+    };
 
 const BASIC_POSITION_PARSER: fn(&str) -> Result<String, String> = |input: &str| {
-    return SPECIFIC_COUNT_OF_ALPHABET_CHARACTERS_PARSER(input, 3);
+    return SPECIFIC_COUNT_OF_SUPPORTED_ALPHABET_CHARACTERS_PARSER(input, 3);
 };
 
 const MESSAGE_KEY_PARSER: fn(&str) -> Result<String, String> = |input: &str| {
-    return SPECIFIC_COUNT_OF_ALPHABET_CHARACTERS_PARSER(input, 3);
+    return SPECIFIC_COUNT_OF_SUPPORTED_ALPHABET_CHARACTERS_PARSER(input, 3);
 };
 
 const MESSAGE_PARSER: fn(&str) -> Result<String, String> = |input: &str| {
@@ -99,7 +89,7 @@ const MESSAGE_PARSER: fn(&str) -> Result<String, String> = |input: &str| {
             string_vector.push(String::from('X'));
         } else {
             let uppercase = c.to_uppercase().to_string();
-            if ALPHABET.contains(&uppercase) {
+            if SUPPORTED_ALPHABET.contains(&uppercase) {
                 string_vector.push(uppercase);
             } else {
                 errors.push(format!("Unsupported character '{}'", c));
@@ -118,7 +108,7 @@ fn read<T, C>(title_to_print: &str,
               info_to_print: &str,
               read_value_parser: C) -> T
     where
-          C: Fn(&str) -> Result<T, String> {
+        C: Fn(&str) -> Result<T, String> {
     println!("|--- {} ---", title_to_print);
     let formatted_info_to_print = format!("| {}", info_to_print);
     println!("{}", formatted_info_to_print);
@@ -147,7 +137,6 @@ fn main() {
     SimpleLogger::new().init().unwrap();
 
     let mut enigma_builder = EnigmaBuilder::init();
-    let mut enigma_builder = enigma_builder.entry_disk(EntryDisk::identity());
 
     let reflector = read(
         "UKW (reflector)",
@@ -182,7 +171,7 @@ fn main() {
         "Steckerverbindungen (plugboard)",
         format!(
             "Enter pairs of characters that should be connected in plugboard, \
-            for example: AE BG GH. Allowed characters: {}", ALPHABET).as_str(),
+            for example: AE BG GH. Allowed characters: {}", SUPPORTED_ALPHABET).as_str(),
         PLUGBOARD_PARSER
     );
     enigma_builder = enigma_builder.plugboard_connections(plugboard);
@@ -194,14 +183,14 @@ fn main() {
 
     let basic_position = read(
         "Grundstellung (random basic position)",
-        "Random basic position consist of three letters from alphabet, for example: EGW",
+        "Random basic position consist of three letters from SUPPORTED_ALPHABET, for example: EGW",
         BASIC_POSITION_PARSER
     );
     println!();
 
     let message_key = read(
         "Spruchschlussel (random message key)",
-        "Random basic position consist of three letters from alphabet, for example: HIB",
+        "Random basic position consist of three letters from SUPPORTED_ALPHABET, for example: HIB",
         MESSAGE_KEY_PARSER
     );
     println!();
@@ -250,7 +239,7 @@ mod tests {
         }
 
         #[test]
-        fn characters_out_of_alphabet() {
+        fn characters_out_of_supported_alphabet() {
             let result = MESSAGE_PARSER("123");
             assert_eq!(
                 result.unwrap_err(),

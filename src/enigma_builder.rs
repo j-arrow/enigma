@@ -14,10 +14,10 @@ pub struct EnigmaBuilder {
     plugboard_connections: Vec<PlugboardConnection>,
 }
 
-impl<'a> EnigmaBuilder {
-    pub(crate) fn init() -> EnigmaBuilder {
+impl EnigmaBuilder {
+    pub fn init() -> Self {
         EnigmaBuilder {
-            entry_disk: None,
+            entry_disk: Some(EntryDisk::identity()),
             reflector: None,
             rotor_left: None,
             rotor_middle: None,
@@ -26,37 +26,37 @@ impl<'a> EnigmaBuilder {
         }
     }
 
-    pub(crate) fn entry_disk(&mut self, entry_disk: EntryDisk) -> &mut Self {
+    pub fn entry_disk(&mut self, entry_disk: EntryDisk) -> &mut Self {
         self.entry_disk = Some(entry_disk);
         self
     }
 
-    pub(crate) fn reflector(&mut self, reflector: Reflector) -> &mut Self {
+    pub fn reflector(mut self, reflector: Reflector) -> Self {
         self.reflector = Some(reflector);
         self
     }
 
-    pub(crate) fn rotor_left(&mut self, rotor_left: Rotor) -> &mut Self {
+    pub fn rotor_left(mut self, rotor_left: Rotor) -> Self {
         self.rotor_left = Some(rotor_left);
         self
     }
 
-    pub(crate) fn rotor_middle(&mut self, rotor_middle: Rotor) -> &mut Self {
+    pub fn rotor_middle(mut self, rotor_middle: Rotor) -> Self {
         self.rotor_middle = Some(rotor_middle);
         self
     }
 
-    pub(crate) fn rotor_right(&mut self, rotor_right: Rotor) -> &mut Self {
+    pub fn rotor_right(mut self, rotor_right: Rotor) -> Self {
         self.rotor_right = Some(rotor_right);
         self
     }
 
-    pub(crate) fn plugboard_connections(&mut self, plugboard_connections: Vec<PlugboardConnection>) -> &mut Self {
+    pub fn plugboard_connections(mut self, plugboard_connections: Vec<PlugboardConnection>) -> Self {
         self.plugboard_connections = plugboard_connections;
         self
     }
 
-    pub(crate) fn build(&mut self) -> Enigma {
+    pub fn build(&mut self) -> Enigma {
         let mut plugboard = Plugboard::identity();
         for pc in &self.plugboard_connections {
             plugboard.connect(pc.left, pc.right);

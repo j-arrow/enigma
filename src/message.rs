@@ -2,7 +2,7 @@ use chrono::{DateTime, Local};
 use crate::enigma::EncodingResult;
 use std::fmt::{Display, Formatter, Error};
 
-pub(crate) struct Message {
+pub struct Message {
     message_time: String,
     receiver: String,
     sender: String,
@@ -14,7 +14,7 @@ pub(crate) struct Message {
 
 impl Message {
 
-    pub(crate) fn compose(message_time: DateTime<Local>, receiver: String,
+    pub fn compose(message_time: DateTime<Local>, receiver: String,
                sender: String, encoding_result: EncodingResult) -> Self {
         Message {
             message_time: message_time.format("%H%M").to_string(),

@@ -1,5 +1,5 @@
-use crate::data::ALPHABET;
 use log::{debug};
+use crate::enigma::SUPPORTED_ALPHABET;
 
 pub struct Reflector {
     setting: &'static str
@@ -7,23 +7,23 @@ pub struct Reflector {
 
 impl Reflector {
     #[allow(dead_code)]
-    pub(crate) fn a() -> Reflector {
+    pub fn a() -> Reflector {
         Reflector::new(REFLECTOR_A)
     }
     #[allow(dead_code)]
-    pub(crate) fn b() -> Reflector {
+    pub fn b() -> Reflector {
         Reflector::new(REFLECTOR_B)
     }
     #[allow(dead_code)]
-    pub(crate) fn c() -> Reflector {
+    pub fn c() -> Reflector {
         Reflector::new(REFLECTOR_C)
     }
 
     fn new(setting: &'static str) -> Reflector {
-        if setting.len() != ALPHABET.len() {
+        if setting.len() != SUPPORTED_ALPHABET.len() {
             panic!(
                 "Reflector alphabet must be of same length and contain same characters as '{}'",
-                ALPHABET
+                SUPPORTED_ALPHABET
             );
         }
         Reflector {
@@ -33,7 +33,7 @@ impl Reflector {
 
     pub(crate) fn encode(&self, i: u8) -> u8 {
         let c = self.setting.chars().nth(i as usize).unwrap();
-        let idx = ALPHABET.find(c).unwrap();
+        let idx = SUPPORTED_ALPHABET.find(c).unwrap();
         debug!("   --- reflector: {}", c);
         idx as u8
     }

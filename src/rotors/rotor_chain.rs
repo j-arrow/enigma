@@ -1,6 +1,6 @@
 use crate::rotors::rotor::Rotor;
 use log::{debug};
-use crate::data::ALPHABET;
+use crate::enigma::SUPPORTED_ALPHABET;
 
 pub struct RotorChain {
     left: Rotor,
@@ -25,9 +25,9 @@ impl RotorChain {
         }
 
         for c in new_setting_ref.chars() {
-            let option = ALPHABET.find(c);
+            let option = SUPPORTED_ALPHABET.find(c);
             option.expect(
-                &format!("Character '{}' is not in supported alphabet: {}.", c, ALPHABET)
+                &format!("Character '{}' is not in supported alphabet: {}.", c, SUPPORTED_ALPHABET)
             );
         }
 

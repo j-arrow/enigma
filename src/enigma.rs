@@ -7,14 +7,16 @@ use crate::plugboard::Plugboard;
 use crate::rotors::rotor_chain::RotorChain;
 use crate::reflector::Reflector;
 
-pub(crate) struct EncodingResult {
+pub const SUPPORTED_ALPHABET: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+pub struct EncodingResult {
     pub message_length: usize,
     pub basic_position: String,
     pub encoded_message_key: String,
     pub encoded_message: String
 }
 
-pub(crate) struct Enigma {
+pub struct Enigma {
     plugboard: Plugboard,
     entry_disk: EntryDisk,
     rotor_chain: RotorChain,
@@ -31,7 +33,7 @@ impl Enigma {
         }
     }
 
-    pub(crate) fn encode(&mut self, basic_position: String,
+    pub fn encode(&mut self, basic_position: String,
                          message_key: String, message: String) -> EncodingResult {
         // 1. Set rotors to positions of 'basic_position'
         self.rotor_chain.change_setting(&basic_position);
