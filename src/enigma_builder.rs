@@ -26,7 +26,7 @@ impl EnigmaBuilder {
         }
     }
 
-    pub fn entry_disk(&mut self, entry_disk: EntryDisk) -> &mut Self {
+    pub fn entry_disk(mut self, entry_disk: EntryDisk) -> Self {
         self.entry_disk = Some(entry_disk);
         self
     }

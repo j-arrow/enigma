@@ -1,4 +1,4 @@
-use std::{io, process};
+use std::{env, io, process};
 
 use simple_logger::SimpleLogger;
 
@@ -8,7 +8,94 @@ use enigma::rotors::rotor::Rotor;
 use enigma::plugboard::PlugboardConnection;
 use enigma::enigma_builder::EnigmaBuilder;
 use enigma::message::Message;
-use enigma::enigma::SUPPORTED_ALPHABET;
+use enigma::enigma::{SUPPORTED_ALPHABET, Enigma};
+use enigma::entry_disk::EntryDisk;
+
+fn main() {
+    SimpleLogger::new().init().unwrap();
+
+    let args: Vec<String> = env::args().collect();
+    let init_with_default_enigma = args.contains(&String::from("init-sample"));
+
+    let mut enigma = if init_with_default_enigma {
+        println!("Preparing sample Enigma, skipping reading inputs");
+        println!();
+        EnigmaBuilder::init()
+            .entry_disk(EntryDisk::identity())
+            .rotor_left(Rotor::enigma_i_wehrmacht_i())
+            .rotor_middle(Rotor::enigma_i_wehrmacht_ii())
+            .rotor_right(Rotor::enigma_i_wehrmacht_iii())
+            .reflector(Reflector::b())
+            .build()
+    } else {
+        create_enigma_from_read_inputs()
+    };
+
+    let basic_position = read(
+        "Grundstellung (random basic position)",
+        "Random basic position consist of three letters from SUPPORTED_ALPHABET, for example: EGW",
+        BASIC_POSITION_PARSER
+    );
+    println!();
+
+    let message_key = read(
+        "Spruchschlussel (random message key)",
+        "Random basic position consist of three letters from SUPPORTED_ALPHABET, for example: HIB",
+        MESSAGE_KEY_PARSER
+    );
+    println!();
+
+    let message_to_encode = read(
+        "Message to encode",
+        "Enter the message that should be encoded using settings provided earlier (max 500 characters)",
+        MESSAGE_PARSER
+    );
+
+    let encoding_result = enigma.encode(
+        basic_position,
+        message_key,
+        message_to_encode
+    );
+
+    let message = Message::compose(
+        Local::now(),
+        String::from("REC"),
+        String::from("S"),
+        encoding_result
+    );
+
+    println!();
+    println!("{}", message);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    mod message_parser {
+        use super::*;
+
+        #[test]
+        fn valid_message() {
+            let result = MESSAGE_PARSER("Lorem Ipsum is simply dummy text");
+            assert_eq!(
+                result.unwrap(),
+                String::from("LOREMXIPSUMXISXSIMPLYXDUMMYXTEXT")
+            );
+        }
+
+        #[test]
+        fn characters_out_of_supported_alphabet() {
+            let result = MESSAGE_PARSER("123");
+            assert_eq!(
+                result.unwrap_err(),
+                "Unsupported character '1', \
+                Unsupported character '2', \
+                Unsupported character '3'"
+            )
+        }
+    }
+}
 
 const REFLECTOR_PARSER: fn(&str) -> Result<Reflector, String> = |input: &str| {
     if input.eq("A") {
@@ -133,9 +220,7 @@ fn read<T, C>(title_to_print: &str,
     }
 }
 
-fn main() {
-    SimpleLogger::new().init().unwrap();
-
+fn create_enigma_from_read_inputs() -> Enigma {
     let mut enigma_builder = EnigmaBuilder::init();
 
     let reflector = read(
@@ -177,76 +262,12 @@ fn main() {
     enigma_builder = enigma_builder.plugboard_connections(plugboard);
     println!();
 
-    let mut enigma = enigma_builder.build();
+    let enigma = enigma_builder.build();
     println!("Enigma machine built properly");
     println!();
 
-    let basic_position = read(
-        "Grundstellung (random basic position)",
-        "Random basic position consist of three letters from SUPPORTED_ALPHABET, for example: EGW",
-        BASIC_POSITION_PARSER
-    );
-    println!();
-
-    let message_key = read(
-        "Spruchschlussel (random message key)",
-        "Random basic position consist of three letters from SUPPORTED_ALPHABET, for example: HIB",
-        MESSAGE_KEY_PARSER
-    );
-    println!();
-
     println!("----");
     println!("----");
     println!("----");
-
-    let message_to_encode = read(
-        "Message to encode",
-        "Enter the message that should be encoded using settings provided earlier (max 500 characters)",
-        MESSAGE_PARSER
-    );
-
-    let encoding_result = enigma.encode(
-        basic_position,
-        message_key,
-        message_to_encode
-    );
-
-    let message = Message::compose(
-        Local::now(),
-        String::from("REC"),
-        String::from("S"),
-        encoding_result
-    );
-
-    println!();
-    println!("{}", message);
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    mod message_parser {
-        use super::*;
-
-        #[test]
-        fn valid_message() {
-            let result = MESSAGE_PARSER("Lorem Ipsum is simply dummy text");
-            assert_eq!(
-                result.unwrap(),
-                String::from("LOREMXIPSUMXISXSIMPLYXDUMMYXTEXT")
-            );
-        }
-
-        #[test]
-        fn characters_out_of_supported_alphabet() {
-            let result = MESSAGE_PARSER("123");
-            assert_eq!(
-                result.unwrap_err(),
-                "Unsupported character '1', \
-                Unsupported character '2', \
-                Unsupported character '3'"
-            )
-        }
-    }
+    enigma
 }
