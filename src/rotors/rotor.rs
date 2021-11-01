@@ -88,6 +88,20 @@ impl Rotor {
         self.turnover_offsets.contains(&self.current_offset)
     }
 
+    #[allow(dead_code)] // used in tests
+    fn offset_by(&mut self, offset: i8) {
+        self.current_offset = if offset.is_positive() {
+            Rotor::offset_positively(self.current_offset, offset as u8)
+        } else {
+            Rotor::offset_negatively(self.current_offset, (offset * -1) as u8)
+        };
+    }
+
+    #[allow(dead_code)] // used in tests
+    pub(in crate::rotors) fn get_offset_character(&self) -> char {
+        SUPPORTED_ALPHABET.chars().nth(self.current_offset as usize).unwrap()
+    }
+
     fn offset_positively(offset_source: u8, offset_by: u8) -> u8 {
         // this function is complicated just because I had a goal in life
         // to make operations on offset never go out of range 0..25
