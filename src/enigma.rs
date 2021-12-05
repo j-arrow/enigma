@@ -4,8 +4,8 @@
 
 use crate::entry_disk::EntryDisk;
 use crate::plugboard::Plugboard;
-use crate::rotors::rotor_chain::RotorChain;
 use crate::reflector::Reflector;
+use crate::rotors::rotor_chain::RotorChain;
 
 pub const SUPPORTED_ALPHABET: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -13,28 +13,37 @@ pub struct EncodingResult {
     pub message_length: usize,
     pub basic_position: String,
     pub encoded_message_key: String,
-    pub encoded_message: String
+    pub encoded_message: String,
 }
 
 pub struct Enigma {
     plugboard: Plugboard,
     entry_disk: EntryDisk,
     rotor_chain: RotorChain,
-    reflector: Reflector
+    reflector: Reflector,
 }
 
 impl Enigma {
-    pub(crate) fn new(plugboard: Plugboard, entry_disk: EntryDisk, rotor_chain: RotorChain, reflector: Reflector) -> Enigma {
+    pub(crate) fn new(
+        plugboard: Plugboard,
+        entry_disk: EntryDisk,
+        rotor_chain: RotorChain,
+        reflector: Reflector,
+    ) -> Enigma {
         Enigma {
             plugboard,
             entry_disk,
             rotor_chain,
-            reflector
+            reflector,
         }
     }
 
-    pub fn encode(&mut self, basic_position: String,
-                         message_key: String, message: String) -> EncodingResult {
+    pub fn encode(
+        &mut self,
+        basic_position: String,
+        message_key: String,
+        message: String,
+    ) -> EncodingResult {
         // 1. Set rotors to positions of 'basic_position'
         self.rotor_chain.change_setting(&basic_position);
 
@@ -52,7 +61,7 @@ impl Enigma {
             message_length: message.len(),
             basic_position,
             encoded_message_key,
-            encoded_message
+            encoded_message,
         }
     }
 
@@ -182,11 +191,7 @@ mod test {
         }
     }
 
-    fn test_enigma_i(
-        initial_rotor_settings: &str,
-        decoded: &str,
-        encoded: &str
-    ) {
+    fn test_enigma_i(initial_rotor_settings: &str, decoded: &str, encoded: &str) {
         let plugboard = Plugboard::identity();
         test_enigma_i_with_custom_plugboard(initial_rotor_settings, plugboard, decoded, encoded);
     }
@@ -195,7 +200,7 @@ mod test {
         initial_rotor_settings: &str,
         plugboard: Plugboard,
         decoded: &str,
-        encoded: &str
+        encoded: &str,
     ) {
         let entry_disk = EntryDisk::identity();
 
@@ -213,9 +218,7 @@ mod test {
         let mut enigma = Enigma::new(plugboard, entry_disk, rotor_chain, reflector);
 
         assert_eq!(
-            enigma.encode_for_current_rotor_setting(
-                &String::from(decoded)
-            ),
+            enigma.encode_for_current_rotor_setting(&String::from(decoded)),
             encoded
         );
     }

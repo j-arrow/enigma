@@ -1,11 +1,11 @@
-use log::debug;
 use crate::enigma::SUPPORTED_ALPHABET;
+use log::debug;
 
 #[derive(Debug, PartialEq)]
 pub struct Rotor {
     current_offset: u8,
     alphabet: &'static str,
-    turnover_offsets: Vec<u8>
+    turnover_offsets: Vec<u8>,
 }
 
 impl Rotor {
@@ -16,7 +16,10 @@ impl Rotor {
         Rotor::new(ENIGMA_I_WEHRMACHT_II_ROTOR, ENIGMA_I_WEHRMACHT_II_TURNOVER)
     }
     pub fn enigma_i_wehrmacht_iii() -> Rotor {
-        Rotor::new(ENIGMA_I_WEHRMACHT_III_ROTOR, ENIGMA_I_WEHRMACHT_III_TURNOVER)
+        Rotor::new(
+            ENIGMA_I_WEHRMACHT_III_ROTOR,
+            ENIGMA_I_WEHRMACHT_III_TURNOVER,
+        )
     }
     pub fn m3_wehrmacht_iv() -> Rotor {
         Rotor::new(M3_WEHRMACHT_IV_ROTOR, M3_WEHRMACHT_IV_TURNOVER)
@@ -28,22 +31,26 @@ impl Rotor {
     fn new(alphabet: &'static str, turnover: &'static str) -> Rotor {
         for c in alphabet.chars() {
             if !SUPPORTED_ALPHABET.contains(c) {
-                panic!("Alphabet error: '{}' must be a letter from set '{}'", c, SUPPORTED_ALPHABET);
+                panic!(
+                    "Alphabet error: '{}' must be a letter from set '{}'",
+                    c, SUPPORTED_ALPHABET
+                );
             }
         }
 
         let mut turnover_offsets: Vec<u8> = Vec::with_capacity(turnover.chars().count());
         for c in turnover.chars() {
-            let i = SUPPORTED_ALPHABET.find(c).expect(
-                &format!("Turnover error: '{}' must be a letter from set '{}'", c, SUPPORTED_ALPHABET)
-            ) as u8;
+            let i = SUPPORTED_ALPHABET.find(c).expect(&format!(
+                "Turnover error: '{}' must be a letter from set '{}'",
+                c, SUPPORTED_ALPHABET
+            )) as u8;
             turnover_offsets.push(i);
         }
 
         Rotor {
             current_offset: 0,
             alphabet,
-            turnover_offsets
+            turnover_offsets,
         }
     }
 
@@ -60,15 +67,21 @@ impl Rotor {
         let offseted_i = Rotor::offset_positively(i, self.current_offset);
         let next_encoded = SUPPORTED_ALPHABET.chars().nth(offseted_i as usize).unwrap();
         let next_i = self.alphabet.find(next_encoded).unwrap();
-        debug!("   --- rotor_l: {}", SUPPORTED_ALPHABET.chars().nth(next_i).unwrap());
+        debug!(
+            "   --- rotor_l: {}",
+            SUPPORTED_ALPHABET.chars().nth(next_i).unwrap()
+        );
         let next_i = Rotor::offset_negatively(next_i as u8, self.current_offset);
         next_i
     }
 
     pub(crate) fn turn_to_character(&mut self, character: char) {
         self.current_offset = match SUPPORTED_ALPHABET.find(character) {
-            None => panic!("Character '{}' is not in supported alphabet: {}", character, SUPPORTED_ALPHABET),
-            Some(position) => position
+            None => panic!(
+                "Character '{}' is not in supported alphabet: {}",
+                character, SUPPORTED_ALPHABET
+            ),
+            Some(position) => position,
         } as u8;
     }
 
@@ -78,10 +91,17 @@ impl Rotor {
         debug!(
             "Rotor steps from '{}' to '{}'. Will rotate next rotor? {}",
             // character BEFORE rotation
-            SUPPORTED_ALPHABET.chars().nth(Rotor::offset_negatively(self.current_offset, 1) as usize).unwrap(),
+            SUPPORTED_ALPHABET
+                .chars()
+                .nth(Rotor::offset_negatively(self.current_offset, 1) as usize)
+                .unwrap(),
             //character AFTER rotation
-            SUPPORTED_ALPHABET.chars().nth(self.current_offset as usize).unwrap(),
-            should_rotate_next);
+            SUPPORTED_ALPHABET
+                .chars()
+                .nth(self.current_offset as usize)
+                .unwrap(),
+            should_rotate_next
+        );
         should_rotate_next
     }
 
@@ -100,7 +120,10 @@ impl Rotor {
 
     #[allow(dead_code)] // used in tests
     pub(in crate::rotors) fn get_offset_character(&self) -> char {
-        SUPPORTED_ALPHABET.chars().nth(self.current_offset as usize).unwrap()
+        SUPPORTED_ALPHABET
+            .chars()
+            .nth(self.current_offset as usize)
+            .unwrap()
     }
 
     fn offset_positively(offset_source: u8, offset_by: u8) -> u8 {
@@ -118,7 +141,9 @@ impl Rotor {
             } else {
                 o - allowed_max_offset_before_limit - 1
             }
-        } else { offset_source + o }
+        } else {
+            offset_source + o
+        }
     }
 
     fn offset_negatively(offset_source: u8, offset_by: u8) -> u8 {
@@ -170,32 +195,32 @@ mod tests {
         let mut r = Rotor::new(SUPPORTED_ALPHABET, "DGIKW");
 
         for _ in 1..=5 {
-            assert_eq!(r.rotate(), false);  // A
-            assert_eq!(r.rotate(), false);  // B
-            assert_eq!(r.rotate(), false);  // C
-            assert_eq!(r.rotate(), true);   // -> D
-            assert_eq!(r.rotate(), false);  // E
-            assert_eq!(r.rotate(), false);  // F
-            assert_eq!(r.rotate(), true);   // -> G
-            assert_eq!(r.rotate(), false);  // H
-            assert_eq!(r.rotate(), true);   // -> I
-            assert_eq!(r.rotate(), false);  // J
-            assert_eq!(r.rotate(), true);   // -> K
-            assert_eq!(r.rotate(), false);  // L
-            assert_eq!(r.rotate(), false);  // M
-            assert_eq!(r.rotate(), false);  // N
-            assert_eq!(r.rotate(), false);  // O
-            assert_eq!(r.rotate(), false);  // P
-            assert_eq!(r.rotate(), false);  // Q
-            assert_eq!(r.rotate(), false);  // R
-            assert_eq!(r.rotate(), false);  // S
-            assert_eq!(r.rotate(), false);  // T
-            assert_eq!(r.rotate(), false);  // U
-            assert_eq!(r.rotate(), false);  // V
-            assert_eq!(r.rotate(), true);   // -> W
-            assert_eq!(r.rotate(), false);  // X
-            assert_eq!(r.rotate(), false);  // Y
-            assert_eq!(r.rotate(), false);  // Z
+            assert_eq!(r.rotate(), false); // A
+            assert_eq!(r.rotate(), false); // B
+            assert_eq!(r.rotate(), false); // C
+            assert_eq!(r.rotate(), true); // -> D
+            assert_eq!(r.rotate(), false); // E
+            assert_eq!(r.rotate(), false); // F
+            assert_eq!(r.rotate(), true); // -> G
+            assert_eq!(r.rotate(), false); // H
+            assert_eq!(r.rotate(), true); // -> I
+            assert_eq!(r.rotate(), false); // J
+            assert_eq!(r.rotate(), true); // -> K
+            assert_eq!(r.rotate(), false); // L
+            assert_eq!(r.rotate(), false); // M
+            assert_eq!(r.rotate(), false); // N
+            assert_eq!(r.rotate(), false); // O
+            assert_eq!(r.rotate(), false); // P
+            assert_eq!(r.rotate(), false); // Q
+            assert_eq!(r.rotate(), false); // R
+            assert_eq!(r.rotate(), false); // S
+            assert_eq!(r.rotate(), false); // T
+            assert_eq!(r.rotate(), false); // U
+            assert_eq!(r.rotate(), false); // V
+            assert_eq!(r.rotate(), true); // -> W
+            assert_eq!(r.rotate(), false); // X
+            assert_eq!(r.rotate(), false); // Y
+            assert_eq!(r.rotate(), false); // Z
         }
     }
 

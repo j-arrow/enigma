@@ -4,12 +4,12 @@ use enigma::entry_disk::EntryDisk;
 use simple_logger::SimpleLogger;
 
 use chrono::Local;
-use enigma::reflector::Reflector;
-use enigma::rotors::rotor::Rotor;
-use enigma::plugboard::PlugboardConnection;
+use enigma::enigma::SUPPORTED_ALPHABET;
 use enigma::enigma_builder::EnigmaBuilder;
 use enigma::message::Message;
-use enigma::enigma::SUPPORTED_ALPHABET;
+use enigma::plugboard::PlugboardConnection;
+use enigma::reflector::Reflector;
+use enigma::rotors::rotor::Rotor;
 
 use structopt::StructOpt;
 
@@ -20,11 +20,11 @@ fn main() {
 
     let mut enigma_builder = if args.use_sample {
         EnigmaBuilder::init()
-                .entry_disk(EntryDisk::identity())
-                .rotor_left(Rotor::enigma_i_wehrmacht_i())
-                .rotor_middle(Rotor::enigma_i_wehrmacht_ii())
-                .rotor_right(Rotor::enigma_i_wehrmacht_iii())
-                .reflector(Reflector::b())
+            .entry_disk(EntryDisk::identity())
+            .rotor_left(Rotor::enigma_i_wehrmacht_i())
+            .rotor_middle(Rotor::enigma_i_wehrmacht_ii())
+            .rotor_right(Rotor::enigma_i_wehrmacht_iii())
+            .reflector(Reflector::b())
     } else {
         EnigmaBuilder::init()
     };
@@ -34,57 +34,76 @@ fn main() {
     let message_to_encode: Option<String>;
 
     if args.allow_cli_questions {
-        let reflector = args.reflector.unwrap_or_else(|| read(
-            "UKW (reflector)",
-            "Available: A, B or C",
-            REFLECTOR_PARSER));
+        let reflector = args
+            .reflector
+            .unwrap_or_else(|| read("UKW (reflector)", "Available: A, B or C", REFLECTOR_PARSER));
         enigma_builder = enigma_builder.reflector(reflector);
 
-        let rotor_left = args.rotor_left.unwrap_or_else(|| read(
-            "Welzelage I (left rotor)",
-            "Available: I, II, III, IV, V",
-            ROTOR_PARSER));
+        let rotor_left = args.rotor_left.unwrap_or_else(|| {
+            read(
+                "Welzelage I (left rotor)",
+                "Available: I, II, III, IV, V",
+                ROTOR_PARSER,
+            )
+        });
         enigma_builder = enigma_builder.rotor_left(rotor_left);
 
-        let rotor_middle = args.rotor_middle.unwrap_or_else(|| read(
-            "Welzelage II (middle rotor)",
-            "Available: I, II, III, IV, V",
-            ROTOR_PARSER));
+        let rotor_middle = args.rotor_middle.unwrap_or_else(|| {
+            read(
+                "Welzelage II (middle rotor)",
+                "Available: I, II, III, IV, V",
+                ROTOR_PARSER,
+            )
+        });
         enigma_builder = enigma_builder.rotor_middle(rotor_middle);
 
-        let rotor_right = args.rotor_right.unwrap_or_else(|| read(
-            "Welzelage III (right rotor)",
-            "Available: I, II, III, IV, V",
-            ROTOR_PARSER));
+        let rotor_right = args.rotor_right.unwrap_or_else(|| {
+            read(
+                "Welzelage III (right rotor)",
+                "Available: I, II, III, IV, V",
+                ROTOR_PARSER,
+            )
+        });
         enigma_builder = enigma_builder.rotor_right(rotor_right);
 
         let plugboard_connections = if args.plugboard_connections.is_empty() {
             read(
                 "Steckerverbindungen (plugboard)",
                 format!(
-                    "Enter pairs of characters that should be connected in plugboard, \
-					for example: AE BG GH. Allowed characters: {}", SUPPORTED_ALPHABET).as_str(),
-                PLUGBOARD_PARSER)
+                    "Enter pairs of characters that should be connected in plugboard, for example: AE BG GH. Allowed characters: {}",
+                    SUPPORTED_ALPHABET
+                )
+                .as_str(),
+                PLUGBOARD_PARSER,
+            )
         } else {
             args.plugboard_connections
         };
         enigma_builder = enigma_builder.plugboard_connections(plugboard_connections);
 
-        basic_position = args.basic_position.or_else(|| Some(read(
-            "Grundstellung (random basic position)",
-            format!(
-				"Random basic position consist of three letters from {}, \
-				for example: EGW", SUPPORTED_ALPHABET).as_str(),
-            BASIC_POSITION_PARSER
-        )));
+        basic_position = args.basic_position.or_else(|| {
+            Some(read(
+                "Grundstellung (random basic position)",
+                format!(
+                    "Random basic position consist of three letters from {}, for example: EGW",
+                    SUPPORTED_ALPHABET
+                )
+                .as_str(),
+                BASIC_POSITION_PARSER,
+            ))
+        });
 
-        message_key = args.message_key.or_else(|| Some(read(
-            "Spruchschlussel (random message key)",
-            format!(
-				"Random message key consist of three letters from {}, \
-				for example: HIB", SUPPORTED_ALPHABET).as_str(),
-            MESSAGE_KEY_PARSER
-        )));
+        message_key = args.message_key.or_else(|| {
+            Some(read(
+                "Spruchschlussel (random message key)",
+                format!(
+                    "Random message key consist of three letters from {}, for example: HIB",
+                    SUPPORTED_ALPHABET
+                )
+                .as_str(),
+                MESSAGE_KEY_PARSER,
+            ))
+        });
 
         message_to_encode = args.message.or_else(|| Some(read(
             "Message to encode",
@@ -92,24 +111,24 @@ fn main() {
             MESSAGE_PARSER
         )));
     } else {
-		basic_position = args.basic_position;
-		message_key = args.message_key;
-		message_to_encode = args.message;
-	}
+        basic_position = args.basic_position;
+        message_key = args.message_key;
+        message_to_encode = args.message;
+    }
 
     let mut enigma = enigma_builder.build();
 
     let encoding_result = enigma.encode(
         basic_position.unwrap(),
         message_key.unwrap(),
-        message_to_encode.unwrap()
+        message_to_encode.unwrap(),
     );
 
     let message = Message::compose(
         Local::now(),
         String::from("REC"),
         String::from("S"),
-        encoding_result
+        encoding_result,
     );
 
     println!();
@@ -150,10 +169,7 @@ mod tests {
         #[test]
         fn works_with_allowing_all_parameters_to_be_provided_in_runtime() {
             assert_eq!(
-                Arguments::from_iter(&[
-                    "test",
-                    "--allow-cli-questions",
-                ]),
+                Arguments::from_iter(&["test", "--allow-cli-questions",]),
                 Arguments {
                     allow_cli_questions: true,
                     use_sample: false,
@@ -172,11 +188,7 @@ mod tests {
         #[test]
         fn works_with_allowing_all_parameters_to_be_provided_in_runtime_using_sample_enigma() {
             assert_eq!(
-                Arguments::from_iter(&[
-                    "test",
-                    "--allow-cli-questions",
-                    "--use-sample",
-                ]),
+                Arguments::from_iter(&["test", "--allow-cli-questions", "--use-sample",]),
                 Arguments {
                     allow_cli_questions: true,
                     use_sample: true,
@@ -243,9 +255,8 @@ const ROTOR_PARSER: fn(&str) -> Result<Rotor, String> = |input: &str| {
     }
 };
 
-const PLUGBOARD_CONNECTION_PARSER: fn(&str) -> Result<PlugboardConnection, String> = |input: &str| {
-    PlugboardConnection::create(input)
-};
+const PLUGBOARD_CONNECTION_PARSER: fn(&str) -> Result<PlugboardConnection, String> =
+    |input: &str| PlugboardConnection::create(input);
 
 const PLUGBOARD_PARSER: fn(&str) -> Result<Vec<PlugboardConnection>, String> = |input: &str| {
     let mut valid: Vec<PlugboardConnection> = vec![];
@@ -258,23 +269,39 @@ const PLUGBOARD_PARSER: fn(&str) -> Result<Vec<PlugboardConnection>, String> = |
             errors.push(result.err().unwrap());
         }
     }
-    if errors.is_empty() { Ok(valid) } else { Err(errors.join(", ")) }
+    if errors.is_empty() {
+        Ok(valid)
+    } else {
+        Err(errors.join(", "))
+    }
 };
 
-const SPECIFIC_COUNT_OF_SUPPORTED_ALPHABET_CHARACTERS_PARSER: fn(&str, u16) -> Result<String, String> =
-    |input: &str, required_character_count: u16| {
-        let mut errors: Vec<String> = vec![];
-        for (i, ch) in input.chars().enumerate() {
-            if !SUPPORTED_ALPHABET.contains(ch) {
-                errors.push(format!("Character '{}' not found in allowed SUPPORTED_ALPHABET: {}", ch, SUPPORTED_ALPHABET));
-            }
-            if i == required_character_count as usize {
-                errors.push(format!("Found more than {} allowed characters", required_character_count));
-                return Err(errors.join(", "));
-            }
+const SPECIFIC_COUNT_OF_SUPPORTED_ALPHABET_CHARACTERS_PARSER: fn(
+    &str,
+    u16,
+) -> Result<String, String> = |input: &str, required_character_count: u16| {
+    let mut errors: Vec<String> = vec![];
+    for (i, ch) in input.chars().enumerate() {
+        if !SUPPORTED_ALPHABET.contains(ch) {
+            errors.push(format!(
+                "Character '{}' not found in allowed SUPPORTED_ALPHABET: {}",
+                ch, SUPPORTED_ALPHABET
+            ));
         }
-        if errors.is_empty() { Ok(input.to_string()) } else { Err(errors.join(", ")) }
-    };
+        if i == required_character_count as usize {
+            errors.push(format!(
+                "Found more than {} allowed characters",
+                required_character_count
+            ));
+            return Err(errors.join(", "));
+        }
+    }
+    if errors.is_empty() {
+        Ok(input.to_string())
+    } else {
+        Err(errors.join(", "))
+    }
+};
 
 const BASIC_POSITION_PARSER: fn(&str) -> Result<String, String> = |input: &str| {
     return SPECIFIC_COUNT_OF_SUPPORTED_ALPHABET_CHARACTERS_PARSER(input, 3);
@@ -290,7 +317,10 @@ const MESSAGE_PARSER: fn(&str) -> Result<String, String> = |input: &str| {
 
     let allowed_limit = 500;
     if input.len() > allowed_limit {
-        errors.push(format!("Input length exceeded allowed limit of {} characters", input.len()));
+        errors.push(format!(
+            "Input length exceeded allowed limit of {} characters",
+            input.len()
+        ));
     }
 
     for c in input.chars() {
@@ -313,20 +343,17 @@ const MESSAGE_PARSER: fn(&str) -> Result<String, String> = |input: &str| {
     }
 };
 
-fn read<T, C>(title_to_print: &str,
-              info_to_print: &str,
-              read_value_parser: C) -> T
-    where
-        C: Fn(&str) -> Result<T, String> {
+fn read<T, C>(title_to_print: &str, info_to_print: &str, read_value_parser: C) -> T
+where
+    C: Fn(&str) -> Result<T, String>,
+{
     println!("|--- {} ---", title_to_print);
     let formatted_info_to_print = format!("| {}", info_to_print);
     println!("{}", formatted_info_to_print);
     println!("| write 'exit' to quit");
     loop {
         let mut v = String::new();
-        io::stdin()
-            .read_line(&mut v)
-            .expect("Failed to read line");
+        io::stdin().read_line(&mut v).expect("Failed to read line");
         let v = v.trim();
         if v.eq("exit") {
             process::exit(0);
@@ -346,15 +373,15 @@ fn read<T, C>(title_to_print: &str,
 #[structopt(name = "Enigma")]
 struct Arguments {
     #[structopt(
-		long="allow-cli-questions",
-		help="Allows CLI questions during runtime to pass all missing, but required, parameters"
-	)]
+        long = "allow-cli-questions",
+        help = "Allows CLI questions during runtime to pass all missing, but required, parameters"
+    )]
     allow_cli_questions: bool,
 
     #[structopt(
-		long="use-sample",
-		help="Use sample Engima as a base for overriding parameters: identity entry disk and plugboard, reflector B, rotors Enigma I Wehrmacht I, II, III (from left to right)"
-	)]
+        long = "use-sample",
+        help = "Use sample Engima as a base for overriding parameters: identity entry disk and plugboard, reflector B, rotors Enigma I Wehrmacht I, II, III (from left to right)"
+    )]
     use_sample: bool,
 
     #[structopt(

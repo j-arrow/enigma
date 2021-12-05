@@ -1,7 +1,7 @@
-use crate::entry_disk::EntryDisk;
-use crate::reflector::Reflector;
 use crate::enigma::Enigma;
+use crate::entry_disk::EntryDisk;
 use crate::plugboard::{Plugboard, PlugboardConnection};
+use crate::reflector::Reflector;
 use crate::rotors::rotor::Rotor;
 use crate::rotors::rotor_chain::RotorChain;
 
@@ -51,7 +51,10 @@ impl EnigmaBuilder {
         self
     }
 
-    pub fn plugboard_connections(mut self, plugboard_connections: Vec<PlugboardConnection>) -> Self {
+    pub fn plugboard_connections(
+        mut self,
+        plugboard_connections: Vec<PlugboardConnection>,
+    ) -> Self {
         self.plugboard_connections = plugboard_connections;
         self
     }
@@ -65,13 +68,13 @@ impl EnigmaBuilder {
         let rotor_chain = RotorChain::new(
             self.rotor_left.take().expect("Left rotor is required"),
             self.rotor_middle.take().expect("Middle rotor is required"),
-            self.rotor_right.take().expect("Right rotor is required")
+            self.rotor_right.take().expect("Right rotor is required"),
         );
         Enigma::new(
             plugboard,
             self.entry_disk.take().expect("Entry disk is required"),
             rotor_chain,
-            self.reflector.take().expect("Reflector is required")
+            self.reflector.take().expect("Reflector is required"),
         )
     }
 }

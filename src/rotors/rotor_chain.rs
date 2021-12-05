@@ -1,11 +1,11 @@
-use crate::rotors::rotor::Rotor;
-use log::{debug};
 use crate::enigma::SUPPORTED_ALPHABET;
+use crate::rotors::rotor::Rotor;
+use log::debug;
 
 pub struct RotorChain {
     left: Rotor,
     middle: Rotor,
-    right: Rotor
+    right: Rotor,
 }
 
 impl RotorChain {
@@ -13,27 +13,33 @@ impl RotorChain {
         RotorChain {
             left,
             middle,
-            right
+            right,
         }
     }
 
     pub(crate) fn change_setting<S: AsRef<str>>(&mut self, new_setting: S) {
         let new_setting_ref = new_setting.as_ref();
         if new_setting_ref.len() != 3 {
-            panic!("New setting for rotor chain is unsupported. Required 3 characters, got {}.",
-                   new_setting_ref.len());
+            panic!(
+                "New setting for rotor chain is unsupported. Required 3 characters, got {}.",
+                new_setting_ref.len()
+            );
         }
 
         for c in new_setting_ref.chars() {
             let option = SUPPORTED_ALPHABET.find(c);
-            option.expect(
-                &format!("Character '{}' is not in supported alphabet: {}.", c, SUPPORTED_ALPHABET)
-            );
+            option.expect(&format!(
+                "Character '{}' is not in supported alphabet: {}.",
+                c, SUPPORTED_ALPHABET
+            ));
         }
 
-        self.left.turn_to_character(new_setting_ref.chars().nth(0).unwrap());
-        self.middle.turn_to_character(new_setting_ref.chars().nth(1).unwrap());
-        self.right.turn_to_character(new_setting_ref.chars().nth(2).unwrap());
+        self.left
+            .turn_to_character(new_setting_ref.chars().nth(0).unwrap());
+        self.middle
+            .turn_to_character(new_setting_ref.chars().nth(1).unwrap());
+        self.right
+            .turn_to_character(new_setting_ref.chars().nth(2).unwrap());
     }
 
     pub(crate) fn encode_from_right(&self, encoded: u8) -> u8 {
@@ -53,7 +59,10 @@ impl RotorChain {
     pub(crate) fn rotate(&mut self) {
         let will_rotate_middle = self.right.rotate();
         if will_rotate_middle || self.middle.is_in_turnover_position() {
-            debug!("Will force next rotor rotation due to double step? {}", self.middle.is_in_turnover_position());
+            debug!(
+                "Will force next rotor rotation due to double step? {}",
+                self.middle.is_in_turnover_position()
+            );
             let will_rotate_left = self.middle.rotate();
             if will_rotate_left {
                 self.left.rotate();
@@ -70,7 +79,9 @@ mod tests {
         use super::*;
 
         #[test]
-        #[should_panic(expected = "New setting for rotor chain is unsupported. Required 3 characters, got 1.")]
+        #[should_panic(
+            expected = "New setting for rotor chain is unsupported. Required 3 characters, got 1."
+        )]
         fn will_panic_on_too_short_new_setting() {
             let r1 = Rotor::enigma_i_wehrmacht_i();
             let r2 = Rotor::enigma_i_wehrmacht_ii();
@@ -81,7 +92,9 @@ mod tests {
         }
 
         #[test]
-        #[should_panic(expected = "New setting for rotor chain is unsupported. Required 3 characters, got 6.")]
+        #[should_panic(
+            expected = "New setting for rotor chain is unsupported. Required 3 characters, got 6."
+        )]
         fn will_panic_on_too_long_new_setting() {
             let r1 = Rotor::enigma_i_wehrmacht_i();
             let r2 = Rotor::enigma_i_wehrmacht_ii();
@@ -92,7 +105,9 @@ mod tests {
         }
 
         #[test]
-        #[should_panic(expected = "Character '1' is not in supported alphabet: ABCDEFGHIJKLMNOPQRSTUVWXYZ.")]
+        #[should_panic(
+            expected = "Character '1' is not in supported alphabet: ABCDEFGHIJKLMNOPQRSTUVWXYZ."
+        )]
         fn will_panic_on_unknown_character() {
             let r1 = Rotor::enigma_i_wehrmacht_i();
             let r2 = Rotor::enigma_i_wehrmacht_ii();
@@ -164,6 +179,6 @@ mod tests {
             chain.left.get_offset_character(),
             chain.middle.get_offset_character(),
             chain.right.get_offset_character()
-        )
+        );
     }
 }

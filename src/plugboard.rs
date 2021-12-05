@@ -1,31 +1,33 @@
-use std::collections::BTreeMap;
 use crate::enigma::SUPPORTED_ALPHABET;
+use std::collections::BTreeMap;
 
 pub struct Plugboard {
-    mapping: BTreeMap<char, char>
+    mapping: BTreeMap<char, char>,
 }
 
 impl Plugboard {
     pub(crate) fn identity() -> Plugboard {
-        let mapping = SUPPORTED_ALPHABET.chars()
-            .fold(
-                BTreeMap::new(),
-                |mut acc, c| {
-                    acc.insert(c, c);
-                    acc
-                }
-            );
-        Plugboard {
-            mapping
-        }
+        let mapping = SUPPORTED_ALPHABET
+            .chars()
+            .fold(BTreeMap::new(), |mut acc, c| {
+                acc.insert(c, c);
+                acc
+            });
+        Plugboard { mapping }
     }
 
     pub(crate) fn connect(&mut self, from: char, to: char) {
         if let None = SUPPORTED_ALPHABET.find(from) {
-            panic!("Character '{}' is not in supported alphabet: {}", from, SUPPORTED_ALPHABET);
+            panic!(
+                "Character '{}' is not in supported alphabet: {}",
+                from, SUPPORTED_ALPHABET
+            );
         }
         if let None = SUPPORTED_ALPHABET.find(to) {
-            panic!("Character '{}' is not in supported alphabet: {}", to, SUPPORTED_ALPHABET);
+            panic!(
+                "Character '{}' is not in supported alphabet: {}",
+                to, SUPPORTED_ALPHABET
+            );
         }
 
         if from.eq(&to) {
@@ -52,7 +54,10 @@ impl Plugboard {
 
     pub(crate) fn disconnect(&mut self, char_to_disconnect: char) {
         if let None = SUPPORTED_ALPHABET.find(char_to_disconnect) {
-            panic!("Character '{}' is not in supported alphabet: {}", char_to_disconnect, SUPPORTED_ALPHABET);
+            panic!(
+                "Character '{}' is not in supported alphabet: {}",
+                char_to_disconnect, SUPPORTED_ALPHABET
+            );
         }
         let disconnected_value = self.mapping.insert(char_to_disconnect, char_to_disconnect);
 
@@ -65,8 +70,10 @@ impl Plugboard {
     }
 
     pub(crate) fn encode_from_right(&self, letter: char) -> u8 {
-        let encoded = self.mapping.get(&letter)
-            .expect(&format!("Plugboard does not support '{}' character", letter));
+        let encoded = self.mapping.get(&letter).expect(&format!(
+            "Plugboard does not support '{}' character",
+            letter
+        ));
         SUPPORTED_ALPHABET.find(*encoded).unwrap() as u8
     }
 
@@ -79,31 +86,39 @@ impl Plugboard {
 #[derive(Debug, PartialEq)]
 pub struct PlugboardConnection {
     pub(crate) left: char,
-    pub(crate) right: char
+    pub(crate) right: char,
 }
 
 impl PlugboardConnection {
     pub fn create(character_pair: &str) -> Result<PlugboardConnection, String> {
         if character_pair.chars().count() != 2 {
-            return Err(format!("Expected only pairs (2 values), but found: {}", character_pair));
+            return Err(format!(
+                "Expected only pairs (2 values), but found: {}",
+                character_pair
+            ));
         }
 
         let p0 = character_pair.chars().nth(0).unwrap();
         let p1 = character_pair.chars().nth(1).unwrap();
         if !SUPPORTED_ALPHABET.contains(p0) {
-            return Err(format!("Value '{}' is not allowed as part of plugboard. Allowed: {}", p0, SUPPORTED_ALPHABET));
+            return Err(format!(
+                "Value '{}' is not allowed as part of plugboard. Allowed: {}",
+                p0, SUPPORTED_ALPHABET
+            ));
         }
         if !SUPPORTED_ALPHABET.contains(p1) {
-            return Err(format!("Value '{}' is not allowed as part of plugboard. Allowed: {}", p1, SUPPORTED_ALPHABET));
+            return Err(format!(
+                "Value '{}' is not allowed as part of plugboard. Allowed: {}",
+                p1, SUPPORTED_ALPHABET
+            ));
         }
 
         Ok(PlugboardConnection {
             left: p0,
-            right: p1
+            right: p1,
         })
     }
 }
-
 
 #[cfg(test)]
 mod tests {

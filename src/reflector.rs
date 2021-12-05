@@ -1,9 +1,9 @@
-use log::debug;
 use crate::enigma::SUPPORTED_ALPHABET;
+use log::debug;
 
 #[derive(Debug, PartialEq)]
 pub struct Reflector {
-    setting: &'static str
+    setting: &'static str,
 }
 
 impl Reflector {
@@ -27,9 +27,7 @@ impl Reflector {
                 SUPPORTED_ALPHABET
             );
         }
-        Reflector {
-            setting
-        }
+        Reflector { setting }
     }
 
     pub(crate) fn encode(&self, i: u8) -> u8 {
@@ -42,9 +40,9 @@ impl Reflector {
 
 // ---- names: Heer, Enigma A, Heeres, Wehrmacht, Service Enigma, Army/GAF machine
 #[allow(dead_code)]
-const REFLECTOR_A: &str     = "EJMZALYXVBWFCRQUONTSPIKHGD";
+const REFLECTOR_A: &str = "EJMZALYXVBWFCRQUONTSPIKHGD";
 #[allow(dead_code)]
-const REFLECTOR_B: &str     = "YRUHQSLDPXNGOKMIEBFZCWVJAT";
+const REFLECTOR_B: &str = "YRUHQSLDPXNGOKMIEBFZCWVJAT";
 #[allow(dead_code)]
-const REFLECTOR_C: &str     = "FVPJIAOYEDRZXWGCTKUQSBNMHL";
+const REFLECTOR_C: &str = "FVPJIAOYEDRZXWGCTKUQSBNMHL";
 // ----

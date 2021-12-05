@@ -1,7 +1,7 @@
 use crate::enigma::SUPPORTED_ALPHABET;
 
 pub struct EntryDisk {
-    alphabet: &'static str
+    alphabet: &'static str,
 }
 
 impl EntryDisk {
@@ -11,19 +11,22 @@ impl EntryDisk {
 
     fn new(alphabet: &'static str) -> EntryDisk {
         // TODO panic if alphabets dont contain all same characters
-        EntryDisk {
-            alphabet
-        }
+        EntryDisk { alphabet }
     }
 
     pub(crate) fn encode_from_right(&self, i: u8) -> u8 {
-        let character = SUPPORTED_ALPHABET.chars().nth(i as usize)
+        let character = SUPPORTED_ALPHABET
+            .chars()
+            .nth(i as usize)
             .expect(&format!("Entry disk contains no character at index {}", i));
         self.alphabet.find(character).unwrap() as u8
     }
 
     pub(crate) fn encode_from_left(&self, i: u8) -> u8 {
-        let character = self.alphabet.chars().nth(i as usize)
+        let character = self
+            .alphabet
+            .chars()
+            .nth(i as usize)
             .expect(&format!("Entry disk contains no character at index {}", i));
         SUPPORTED_ALPHABET.find(character).unwrap() as u8
     }
