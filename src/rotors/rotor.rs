@@ -1,6 +1,7 @@
-use log::{debug};
+use log::debug;
 use crate::enigma::SUPPORTED_ALPHABET;
 
+#[derive(Debug, PartialEq)]
 pub struct Rotor {
     current_offset: u8,
     alphabet: &'static str,

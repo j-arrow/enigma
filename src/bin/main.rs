@@ -1,60 +1,108 @@
-use std::{env, io, process};
+use std::{io, process};
 
+use enigma::entry_disk::EntryDisk;
 use simple_logger::SimpleLogger;
 
-use chrono::{Local};
+use chrono::Local;
 use enigma::reflector::Reflector;
 use enigma::rotors::rotor::Rotor;
 use enigma::plugboard::PlugboardConnection;
 use enigma::enigma_builder::EnigmaBuilder;
 use enigma::message::Message;
-use enigma::enigma::{SUPPORTED_ALPHABET, Enigma};
-use enigma::entry_disk::EntryDisk;
+use enigma::enigma::SUPPORTED_ALPHABET;
+
+use structopt::StructOpt;
 
 fn main() {
     SimpleLogger::new().init().unwrap();
 
-    let args: Vec<String> = env::args().collect();
-    let init_with_default_enigma = args.contains(&String::from("init-sample"));
+    let args = Arguments::from_args();
 
-    let mut enigma = if init_with_default_enigma {
-        println!("Preparing sample Enigma, skipping reading inputs");
-        println!();
+    let mut enigma_builder = if args.use_sample {
         EnigmaBuilder::init()
-            .entry_disk(EntryDisk::identity())
-            .rotor_left(Rotor::enigma_i_wehrmacht_i())
-            .rotor_middle(Rotor::enigma_i_wehrmacht_ii())
-            .rotor_right(Rotor::enigma_i_wehrmacht_iii())
-            .reflector(Reflector::b())
-            .build()
+                .entry_disk(EntryDisk::identity())
+                .rotor_left(Rotor::enigma_i_wehrmacht_i())
+                .rotor_middle(Rotor::enigma_i_wehrmacht_ii())
+                .rotor_right(Rotor::enigma_i_wehrmacht_iii())
+                .reflector(Reflector::b())
     } else {
-        create_enigma_from_read_inputs()
+        EnigmaBuilder::init()
     };
 
-    let basic_position = read(
-        "Grundstellung (random basic position)",
-        "Random basic position consist of three letters from SUPPORTED_ALPHABET, for example: EGW",
-        BASIC_POSITION_PARSER
-    );
-    println!();
+    let basic_position: Option<String>;
+    let message_key: Option<String>;
+    let message_to_encode: Option<String>;
 
-    let message_key = read(
-        "Spruchschlussel (random message key)",
-        "Random basic position consist of three letters from SUPPORTED_ALPHABET, for example: HIB",
-        MESSAGE_KEY_PARSER
-    );
-    println!();
+    if args.allow_cli_questions {
+        let reflector = args.reflector.unwrap_or_else(|| read(
+            "UKW (reflector)",
+            "Available: A, B or C",
+            REFLECTOR_PARSER));
+        enigma_builder = enigma_builder.reflector(reflector);
 
-    let message_to_encode = read(
-        "Message to encode",
-        "Enter the message that should be encoded using settings provided earlier (max 500 characters)",
-        MESSAGE_PARSER
-    );
+        let rotor_left = args.rotor_left.unwrap_or_else(|| read(
+            "Welzelage I (left rotor)",
+            "Available: I, II, III, IV, V",
+            ROTOR_PARSER));
+        enigma_builder = enigma_builder.rotor_left(rotor_left);
+
+        let rotor_middle = args.rotor_middle.unwrap_or_else(|| read(
+            "Welzelage II (middle rotor)",
+            "Available: I, II, III, IV, V",
+            ROTOR_PARSER));
+        enigma_builder = enigma_builder.rotor_middle(rotor_middle);
+
+        let rotor_right = args.rotor_right.unwrap_or_else(|| read(
+            "Welzelage III (right rotor)",
+            "Available: I, II, III, IV, V",
+            ROTOR_PARSER));
+        enigma_builder = enigma_builder.rotor_right(rotor_right);
+
+        let plugboard_connections = if args.plugboard_connections.is_empty() {
+            read(
+                "Steckerverbindungen (plugboard)",
+                format!(
+                    "Enter pairs of characters that should be connected in plugboard, \
+					for example: AE BG GH. Allowed characters: {}", SUPPORTED_ALPHABET).as_str(),
+                PLUGBOARD_PARSER)
+        } else {
+            args.plugboard_connections
+        };
+        enigma_builder = enigma_builder.plugboard_connections(plugboard_connections);
+
+        basic_position = args.basic_position.or_else(|| Some(read(
+            "Grundstellung (random basic position)",
+            format!(
+				"Random basic position consist of three letters from {}, \
+				for example: EGW", SUPPORTED_ALPHABET).as_str(),
+            BASIC_POSITION_PARSER
+        )));
+
+        message_key = args.message_key.or_else(|| Some(read(
+            "Spruchschlussel (random message key)",
+            format!(
+				"Random message key consist of three letters from {}, \
+				for example: HIB", SUPPORTED_ALPHABET).as_str(),
+            MESSAGE_KEY_PARSER
+        )));
+
+        message_to_encode = args.message.or_else(|| Some(read(
+            "Message to encode",
+            "Enter the message that should be encoded using settings provided earlier (max 500 characters)",
+            MESSAGE_PARSER
+        )));
+    } else {
+		basic_position = args.basic_position;
+		message_key = args.message_key;
+		message_to_encode = args.message;
+	}
+
+    let mut enigma = enigma_builder.build();
 
     let encoding_result = enigma.encode(
-        basic_position,
-        message_key,
-        message_to_encode
+        basic_position.unwrap(),
+        message_key.unwrap(),
+        message_to_encode.unwrap()
     );
 
     let message = Message::compose(
@@ -95,6 +143,76 @@ mod tests {
             )
         }
     }
+
+    mod cli_arguments {
+        use super::*;
+
+        #[test]
+        fn works_with_allowing_all_parameters_to_be_provided_in_runtime() {
+            assert_eq!(
+                Arguments::from_iter(&[
+                    "test",
+                    "--allow-cli-questions",
+                ]),
+                Arguments {
+                    allow_cli_questions: true,
+                    use_sample: false,
+                    reflector: None,
+                    rotor_left: None,
+                    rotor_middle: None,
+                    rotor_right: None,
+                    plugboard_connections: vec![],
+                    basic_position: None,
+                    message_key: None,
+                    message: None
+                }
+            )
+        }
+
+        #[test]
+        fn works_with_allowing_all_parameters_to_be_provided_in_runtime_using_sample_enigma() {
+            assert_eq!(
+                Arguments::from_iter(&[
+                    "test",
+                    "--allow-cli-questions",
+                    "--use-sample",
+                ]),
+                Arguments {
+                    allow_cli_questions: true,
+                    use_sample: true,
+                    reflector: None,
+                    rotor_left: None,
+                    rotor_middle: None,
+                    rotor_right: None,
+                    plugboard_connections: vec![],
+                    basic_position: None,
+                    message_key: None,
+                    message: None
+                }
+            )
+        }
+
+        #[test]
+        fn using_sample_enigma_requires_providing_encoding_data_but_no_separate_enigma_parts() {
+            let no_whitespaces = |s: String| s.split_whitespace().collect::<String>();
+            assert_eq!(
+                no_whitespaces(
+                    Arguments::from_iter_safe(&["test", "--use-sample"]).unwrap_err().message
+                ),
+                no_whitespaces(String::from(
+                    "error: The following required arguments were not provided:\
+                        --basic-position <basic-position>\
+                        --message <message>\
+                        --message-key <message-key>\
+                    \
+                    USAGE:\
+                        test --basic-position <basic-position> --message <message> --message-key <message-key> --use-sample\
+                    \
+                    For more information try --help"
+                ))
+            );
+        }
+    }
 }
 
 const REFLECTOR_PARSER: fn(&str) -> Result<Reflector, String> = |input: &str| {
@@ -125,11 +243,15 @@ const ROTOR_PARSER: fn(&str) -> Result<Rotor, String> = |input: &str| {
     }
 };
 
+const PLUGBOARD_CONNECTION_PARSER: fn(&str) -> Result<PlugboardConnection, String> = |input: &str| {
+    PlugboardConnection::create(input)
+};
+
 const PLUGBOARD_PARSER: fn(&str) -> Result<Vec<PlugboardConnection>, String> = |input: &str| {
     let mut valid: Vec<PlugboardConnection> = vec![];
     let mut errors: Vec<String> = vec![];
-    for pair in input.split(' ') {
-        let result = PlugboardConnection::create(pair);
+    for pair in input.split(',') {
+        let result = PLUGBOARD_CONNECTION_PARSER(pair);
         if let Ok(connection) = result {
             valid.push(connection);
         } else {
@@ -220,54 +342,82 @@ fn read<T, C>(title_to_print: &str,
     }
 }
 
-fn create_enigma_from_read_inputs() -> Enigma {
-    let mut enigma_builder = EnigmaBuilder::init();
+#[derive(StructOpt, PartialEq, Debug)]
+#[structopt(name = "Enigma")]
+struct Arguments {
+    #[structopt(
+		long="allow-cli-questions",
+		help="Allows CLI questions during runtime to pass all missing, but required, parameters"
+	)]
+    allow_cli_questions: bool,
 
-    let reflector = read(
-        "UKW (reflector)",
-        "reflector: A, B or C",
-        REFLECTOR_PARSER);
-    enigma_builder = enigma_builder.reflector(reflector);
-    println!();
+    #[structopt(
+		long="use-sample",
+		help="Use sample Engima as a base for overriding parameters: identity entry disk and plugboard, reflector B, rotors Enigma I Wehrmacht I, II, III (from left to right)"
+	)]
+    use_sample: bool,
 
-    let rotor_left = read(
-        "Welzelage I (left rotor)",
-        "Available: I, II, III, IV, V",
-        ROTOR_PARSER
-    );
-    enigma_builder = enigma_builder.rotor_left(rotor_left);
+    #[structopt(
+		long="reflector",
+		help="Reflector - allowed values: A, B, C",
+		required_unless_one(&["use-sample", "allow-cli-questions"]),
+		parse(try_from_str=REFLECTOR_PARSER)
+	)]
+    reflector: Option<Reflector>,
 
-    let rotor_middle = read(
-        "Welzelage II (middle rotor)",
-        "Available: I, II, III, IV, V",
-        ROTOR_PARSER
-    );
-    enigma_builder = enigma_builder.rotor_middle(rotor_middle);
+    #[structopt(
+		long="rotor-left",
+		help="Left rotor - allowed values: I, II, III, IV, V",
+		required_unless_one(&["use-sample", "allow-cli-questions"]),
+		parse(try_from_str=ROTOR_PARSER)
+	)]
+    rotor_left: Option<Rotor>,
 
-    let rotor_right = read(
-        "Welzelage III (right rotor)",
-        "Available: I, II, III, IV, V",
-        ROTOR_PARSER
-    );
-    enigma_builder = enigma_builder.rotor_right(rotor_right);
-    println!();
+    #[structopt(
+		long="rotor-middle",
+		help="Middle rotor - allowed values: I, II, III, IV, V",
+		required_unless_one(&["use-sample", "allow-cli-questions"]),
+		parse(try_from_str=ROTOR_PARSER)
+	)]
+    rotor_middle: Option<Rotor>,
 
-    let plugboard = read(
-        "Steckerverbindungen (plugboard)",
-        format!(
-            "Enter pairs of characters that should be connected in plugboard, \
-            for example: AE BG GH. Allowed characters: {}", SUPPORTED_ALPHABET).as_str(),
-        PLUGBOARD_PARSER
-    );
-    enigma_builder = enigma_builder.plugboard_connections(plugboard);
-    println!();
+    #[structopt(
+		long="rotor-right",
+		help="Right rotor - allowed values: I, II, III, IV, V",
+		required_unless_one(&["use-sample", "allow-cli-questions"]),
+		parse(try_from_str=ROTOR_PARSER)
+	)]
+    rotor_right: Option<Rotor>,
 
-    let enigma = enigma_builder.build();
-    println!("Enigma machine built properly");
-    println!();
+    #[structopt(
+		long="plugboard-connection",
+		help="Pais of characters that should be connected in plugboard, for example: AE BG GH",
+		multiple=true,
+		parse(try_from_str=PLUGBOARD_CONNECTION_PARSER)
+	)]
+    plugboard_connections: Vec<PlugboardConnection>,
 
-    println!("----");
-    println!("----");
-    println!("----");
-    enigma
+    #[structopt(
+		long="basic-position",
+		help="Basic position consisting of three letters, for example: EGW (can be picked at random)",
+		required_unless("allow-cli-questions"),
+		parse(try_from_str=BASIC_POSITION_PARSER)
+	)]
+    basic_position: Option<String>,
+
+    #[structopt(
+		long="message-key",
+		help="Message key consisting of three letters,, for example: HIB (can be picked at random)",
+		required_unless("allow-cli-questions"),
+		parse(try_from_str=MESSAGE_KEY_PARSER)
+	)]
+    message_key: Option<String>,
+
+    #[structopt(
+		long="message",
+		help="Message to be encoded (max 500 characters)",
+		required_unless("allow-cli-questions"),
+		parse(try_from_str=MESSAGE_PARSER)
+	)]
+    message: Option<String>,
 }

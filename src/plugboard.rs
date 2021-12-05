@@ -76,6 +76,7 @@ impl Plugboard {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub struct PlugboardConnection {
     pub(crate) left: char,
     pub(crate) right: char
