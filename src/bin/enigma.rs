@@ -418,7 +418,7 @@ struct Arguments {
 
     #[structopt(
 		long="plugboard-connection",
-		help="Pais of characters that should be connected in plugboard, for example: AE BG GH",
+		help="Pairs of characters that should be connected in plugboard, for example: AE BG GH",
 		multiple=true,
 		parse(try_from_str=PLUGBOARD_CONNECTION_PARSER)
 	)]
@@ -434,7 +434,7 @@ struct Arguments {
 
     #[structopt(
 		long="message-key",
-		help="Message key consisting of three letters,, for example: HIB (can be picked at random)",
+		help="Message key consisting of three letters, for example: HIB (can be picked at random)",
 		required_unless("allow-cli-questions"),
 		parse(try_from_str=MESSAGE_KEY_PARSER)
 	)]
