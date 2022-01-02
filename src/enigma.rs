@@ -43,26 +43,52 @@ impl Enigma {
         basic_position: String,
         message_key: String,
         message: String,
-    ) -> EncodingResult {
+    ) -> Result<EncodingResult, String> {
+		let mut message_vector = vec![];
+		let mut message_errors = vec![];
+
+		for c in message.chars() {
+			if c.is_whitespace() {
+				message_vector.push(String::from('X'));
+			} else {
+				// TODO part converting to uppercase should be moved to encoding method
+				let uppercase = c.to_uppercase().to_string();
+				if SUPPORTED_ALPHABET.contains(&uppercase) {
+					message_vector.push(uppercase);
+				} else {
+					message_errors.push(format!("Unsupported character '{}'", c));
+				}
+			}
+		}
+
+		if !message_errors.is_empty() {
+			return Err(message_errors.join(", "));
+		}
+
         // 1. Set rotors to positions of 'basic_position'
-        self.rotor_chain.change_setting(&basic_position);
+        if let Err(e) = self.rotor_chain.change_setting(&basic_position) {
+			return Err(e);
+		}
 
         // 2. Encode 'message_key' and read encoded string
         let encoded_message_key = self.encode_for_current_rotor_setting(&message_key);
 
         // 3. Set rotors to positions of 'message_key'
-        self.rotor_chain.change_setting(&message_key);
+        if let Err(e) = self.rotor_chain.change_setting(&message_key) {
+			return Err(e);
+		}
 
         // 4. Encode the message using 'message_key' rotor setting
-        let encoded_message = self.encode_for_current_rotor_setting(&message);
+		let msg = message_vector.join("");
+        let encoded_message = self.encode_for_current_rotor_setting(&msg);
 
         // 5. Return required values for printing message
-        EncodingResult {
+        Ok(EncodingResult {
             message_length: message.len(),
             basic_position,
             encoded_message_key,
             encoded_message,
-        }
+        })
     }
 
     fn encode_for_current_rotor_setting(&mut self, msg: &String) -> String {

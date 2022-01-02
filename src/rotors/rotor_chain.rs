@@ -17,21 +17,22 @@ impl RotorChain {
         }
     }
 
-    pub(crate) fn change_setting<S: AsRef<str>>(&mut self, new_setting: S) {
+    pub(crate) fn change_setting<S: AsRef<str>>(&mut self, new_setting: S) -> Result<(), String> {
         let new_setting_ref = new_setting.as_ref();
         if new_setting_ref.len() != 3 {
-            panic!(
-                "New setting for rotor chain is unsupported. Required 3 characters, got {}.",
+			return Err(format!(
+				"New setting for rotor chain is unsupported. Required 3 characters, got {}.",
                 new_setting_ref.len()
-            );
+			));
         }
 
         for c in new_setting_ref.chars() {
-            let option = SUPPORTED_ALPHABET.find(c);
-            option.expect(&format!(
-                "Character '{}' is not in supported alphabet: {}.",
-                c, SUPPORTED_ALPHABET
-            ));
+			if let None = SUPPORTED_ALPHABET.find(c) {
+				return Err(format!(
+					"Character '{}' is not in supported alphabet: {}.",
+					c, SUPPORTED_ALPHABET
+				));
+			}
         }
 
         self.left
@@ -40,6 +41,8 @@ impl RotorChain {
             .turn_to_character(new_setting_ref.chars().nth(1).unwrap());
         self.right
             .turn_to_character(new_setting_ref.chars().nth(2).unwrap());
+
+		Ok(())
     }
 
     pub(crate) fn encode_from_right(&self, encoded: u8) -> u8 {
@@ -79,42 +82,42 @@ mod tests {
         use super::*;
 
         #[test]
-        #[should_panic(
-            expected = "New setting for rotor chain is unsupported. Required 3 characters, got 1."
-        )]
-        fn will_panic_on_too_short_new_setting() {
+        fn error_on_too_short_new_setting() {
             let r1 = Rotor::enigma_i_wehrmacht_i();
             let r2 = Rotor::enigma_i_wehrmacht_ii();
             let r3 = Rotor::enigma_i_wehrmacht_iii();
 
             let mut chain = RotorChain::new(r1, r2, r3);
-            chain.change_setting("X");
+            assert_eq!(
+				chain.change_setting("X"),
+				Err("New setting for rotor chain is unsupported. Required 3 characters, got 1.".into())
+			);
         }
 
         #[test]
-        #[should_panic(
-            expected = "New setting for rotor chain is unsupported. Required 3 characters, got 6."
-        )]
-        fn will_panic_on_too_long_new_setting() {
+        fn error_on_too_long_new_setting() {
             let r1 = Rotor::enigma_i_wehrmacht_i();
             let r2 = Rotor::enigma_i_wehrmacht_ii();
             let r3 = Rotor::enigma_i_wehrmacht_iii();
 
             let mut chain = RotorChain::new(r1, r2, r3);
-            chain.change_setting("XXXXXX");
+			assert_eq!(
+				chain.change_setting("XXXXXX"),
+				Err("New setting for rotor chain is unsupported. Required 3 characters, got 6.".into())
+			);
         }
 
         #[test]
-        #[should_panic(
-            expected = "Character '1' is not in supported alphabet: ABCDEFGHIJKLMNOPQRSTUVWXYZ."
-        )]
-        fn will_panic_on_unknown_character() {
+        fn error_on_unknown_character() {
             let r1 = Rotor::enigma_i_wehrmacht_i();
             let r2 = Rotor::enigma_i_wehrmacht_ii();
             let r3 = Rotor::enigma_i_wehrmacht_iii();
 
             let mut chain = RotorChain::new(r1, r2, r3);
-            chain.change_setting("XX1");
+			assert_eq!(
+				chain.change_setting("XX1"),
+				Err("Character '1' is not in supported alphabet: ABCDEFGHIJKLMNOPQRSTUVWXYZ.".into())
+			);
         }
 
         #[test]
@@ -128,7 +131,7 @@ mod tests {
 
             let mut chain = RotorChain::new(r1, r2, r3);
 
-            chain.change_setting("XYZ");
+			assert_eq!(chain.change_setting("XYZ"), Ok(()));
 
             assert_eq!('X', chain.left.get_offset_character());
             assert_eq!('Y', chain.middle.get_offset_character());
@@ -142,7 +145,8 @@ mod tests {
         let r2 = Rotor::enigma_i_wehrmacht_ii();
         let r3 = Rotor::enigma_i_wehrmacht_iii();
         let mut chain = RotorChain::new(r1, r2, r3);
-        chain.change_setting("AAA");
+
+		assert_eq!(chain.change_setting("AAA"), Ok(()));
 
         assert_eq!("AAA", get_offsets_string_for_chain(&chain));
         chain.rotate();
@@ -160,7 +164,7 @@ mod tests {
         let r3 = Rotor::enigma_i_wehrmacht_iii();
 
         let mut chain = RotorChain::new(r1, r2, r3);
-        chain.change_setting("ADU");
+        assert_eq!(chain.change_setting("ADU"), Ok(()));
 
         assert_eq!("ADU", get_offsets_string_for_chain(&chain));
         chain.rotate();

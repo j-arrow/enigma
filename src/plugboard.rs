@@ -16,23 +16,25 @@ impl Plugboard {
         Plugboard { mapping }
     }
 
-    pub(crate) fn connect(&mut self, from: char, to: char) {
+    pub(crate) fn connect(&mut self, from: char, to: char) -> Result<(), String> {
         if let None = SUPPORTED_ALPHABET.find(from) {
-            panic!(
+			return Err(format!(
                 "Character '{}' is not in supported alphabet: {}",
                 from, SUPPORTED_ALPHABET
-            );
+			));
         }
         if let None = SUPPORTED_ALPHABET.find(to) {
-            panic!(
+            return Err(format!(
                 "Character '{}' is not in supported alphabet: {}",
                 to, SUPPORTED_ALPHABET
-            );
+            ));
         }
 
         if from.eq(&to) {
-            self.disconnect(from);
-            return;
+            if let Err(e) = self.disconnect(from) {
+				return Err(e);
+			}
+            return Ok(());
         }
 
         let disconnected_1 = self.mapping.insert(from, to);
@@ -50,23 +52,25 @@ impl Plugboard {
                 }
             }
         }
+		Ok(())
     }
 
-    pub(crate) fn disconnect(&mut self, char_to_disconnect: char) {
+    pub(crate) fn disconnect(&mut self, char_to_disconnect: char) -> Result<(), String> {
         if let None = SUPPORTED_ALPHABET.find(char_to_disconnect) {
-            panic!(
+            return Err(format!(
                 "Character '{}' is not in supported alphabet: {}",
                 char_to_disconnect, SUPPORTED_ALPHABET
-            );
+            ));
         }
         let disconnected_value = self.mapping.insert(char_to_disconnect, char_to_disconnect);
 
         if let Some(c) = disconnected_value {
             if c.eq(&char_to_disconnect) {
-                return;
+                return Ok(());
             }
             *self.mapping.get_mut(&c).unwrap() = c;
         }
+		Ok(())
     }
 
     pub(crate) fn encode_from_right(&self, letter: char) -> u8 {
@@ -91,9 +95,9 @@ pub struct PlugboardConnection {
 
 impl PlugboardConnection {
     pub fn create(character_pair: &str) -> Result<PlugboardConnection, String> {
-        if character_pair.chars().count() != 2 {
+		if character_pair.chars().count() != 2 {
             return Err(format!(
-                "Expected only pairs (2 values), but found: {}",
+                "Expected only pairs (2 values) split by comma character (,), but found: {}",
                 character_pair
             ));
         }
@@ -129,24 +133,24 @@ mod tests {
         let mut plugboard = Plugboard::identity();
         let mut expected_mapping = plugboard.mapping.clone();
 
-        plugboard.connect('A', 'B');
+        assert_eq!(plugboard.connect('A', 'B'), Ok(()));
         expected_mapping.insert('A', 'B');
         expected_mapping.insert('B', 'A');
         assert_eq!(expected_mapping, plugboard.mapping);
 
-        plugboard.connect('C', 'D');
+        assert_eq!(plugboard.connect('C', 'D'), Ok(()));
         expected_mapping.insert('C', 'D');
         expected_mapping.insert('D', 'C');
         assert_eq!(expected_mapping, plugboard.mapping);
 
-        plugboard.connect('B', 'C');
+        assert_eq!(plugboard.connect('B', 'C'), Ok(()));
         expected_mapping.insert('A', 'A');
         expected_mapping.insert('B', 'C');
         expected_mapping.insert('C', 'B');
         expected_mapping.insert('D', 'D');
         assert_eq!(expected_mapping, plugboard.mapping);
 
-        plugboard.disconnect('B');
+        assert_eq!(plugboard.disconnect('B'), Ok(()));
         expected_mapping.insert('B', 'B');
         expected_mapping.insert('C', 'C');
         assert_eq!(expected_mapping, plugboard.mapping);
@@ -157,35 +161,41 @@ mod tests {
         let mut plugboard = Plugboard::identity();
         let mut expected_mapping = plugboard.mapping.clone();
 
-        plugboard.connect('A', 'B');
+        assert_eq!(plugboard.connect('A', 'B'), Ok(()));
         expected_mapping.insert('A', 'B');
         expected_mapping.insert('B', 'A');
         assert_eq!(expected_mapping, plugboard.mapping);
 
-        plugboard.connect('B', 'B');
+        assert_eq!(plugboard.connect('B', 'B'), Ok(()));
         expected_mapping.insert('A', 'A');
         expected_mapping.insert('B', 'B');
         assert_eq!(expected_mapping, plugboard.mapping);
     }
 
     #[test]
-    #[should_panic(expected = "Character '1' is not in supported alphabet")]
-    fn panic_on_connect_for_unsupported_from_character() {
+    fn error_on_connect_for_unsupported_from_character() {
         let mut plugboard = Plugboard::identity();
-        plugboard.connect('1', 'A');
+        assert_eq!(
+			plugboard.connect('1', 'A'),
+			Err("Character '1' is not in supported alphabet: ABCDEFGHIJKLMNOPQRSTUVWXYZ".into())
+		);
     }
 
     #[test]
-    #[should_panic(expected = "Character '2' is not in supported alphabet")]
-    fn panic_on_connect_for_unsupported_to_character() {
+    fn error_on_connect_for_unsupported_to_character() {
         let mut plugboard = Plugboard::identity();
-        plugboard.connect('A', '2');
+        assert_eq!(
+			plugboard.connect('A', '2'),
+			Err("Character '2' is not in supported alphabet: ABCDEFGHIJKLMNOPQRSTUVWXYZ".into())
+		);
     }
 
     #[test]
-    #[should_panic(expected = "Character '3' is not in supported alphabet")]
-    fn panic_on_disconnect_for_unsupported_character() {
+    fn error_on_disconnect_for_unsupported_character() {
         let mut plugboard = Plugboard::identity();
-        plugboard.disconnect('3');
+        assert_eq!(
+			plugboard.disconnect('3'),
+			Err("Character '3' is not in supported alphabet: ABCDEFGHIJKLMNOPQRSTUVWXYZ".into())
+		);
     }
 }
