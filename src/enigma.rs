@@ -44,42 +44,42 @@ impl Enigma {
         message_key: String,
         message: String,
     ) -> Result<EncodingResult, String> {
-		let mut message_vector = vec![];
-		let mut message_errors = vec![];
+        let mut message_vector = vec![];
+        let mut message_errors = vec![];
 
-		for c in message.chars() {
-			if c.is_whitespace() {
-				message_vector.push(String::from('X'));
-			} else {
-				// TODO part converting to uppercase should be moved to encoding method
-				let uppercase = c.to_uppercase().to_string();
-				if SUPPORTED_ALPHABET.contains(&uppercase) {
-					message_vector.push(uppercase);
-				} else {
-					message_errors.push(format!("Unsupported character '{}'", c));
-				}
-			}
-		}
+        for c in message.chars() {
+            if c.is_whitespace() {
+                message_vector.push(String::from('X'));
+            } else {
+                // TODO part converting to uppercase should be moved to encoding method
+                let uppercase = c.to_uppercase().to_string();
+                if SUPPORTED_ALPHABET.contains(&uppercase) {
+                    message_vector.push(uppercase);
+                } else {
+                    message_errors.push(format!("Unsupported character '{}'", c));
+                }
+            }
+        }
 
-		if !message_errors.is_empty() {
-			return Err(message_errors.join(", "));
-		}
+        if !message_errors.is_empty() {
+            return Err(message_errors.join(", "));
+        }
 
         // 1. Set rotors to positions of 'basic_position'
         if let Err(e) = self.rotor_chain.change_setting(&basic_position) {
-			return Err(e);
-		}
+            return Err(e);
+        }
 
         // 2. Encode 'message_key' and read encoded string
         let encoded_message_key = self.encode_for_current_rotor_setting(&message_key);
 
         // 3. Set rotors to positions of 'message_key'
         if let Err(e) = self.rotor_chain.change_setting(&message_key) {
-			return Err(e);
-		}
+            return Err(e);
+        }
 
         // 4. Encode the message using 'message_key' rotor setting
-		let msg = message_vector.join("");
+        let msg = message_vector.join("");
         let encoded_message = self.encode_for_current_rotor_setting(&msg);
 
         // 5. Return required values for printing message
@@ -184,14 +184,14 @@ mod test {
         use super::*;
 
         #[test]
-        fn test_1() {
+		fn test_1() {
             let mut plugboard = Plugboard::identity();
-            plugboard.connect('A', 'B');
-            plugboard.connect('E', 'F');
-            plugboard.connect('H', 'I');
-            plugboard.connect('N', 'O');
-            plugboard.connect('T', 'U');
-            plugboard.connect('X', 'Y');
+            let _ = plugboard.connect('A', 'B');
+            let _ = plugboard.connect('E', 'F');
+            let _ = plugboard.connect('H', 'I');
+            let _ = plugboard.connect('N', 'O');
+            let _ = plugboard.connect('T', 'U');
+            let _ = plugboard.connect('X', 'Y');
 
             test_enigma_i_with_custom_plugboard(
                 "AAA",
@@ -204,9 +204,9 @@ mod test {
         #[test]
         fn test_2() {
             let mut plugboard = Plugboard::identity();
-            plugboard.connect('A', 'E');
-            plugboard.connect('G', 'L');
-            plugboard.connect('Q', 'X');
+            let _ = plugboard.connect('A', 'E');
+            let _ = plugboard.connect('G', 'L');
+            let _ = plugboard.connect('Q', 'X');
 
             test_enigma_i_with_custom_plugboard(
                 "EJO",

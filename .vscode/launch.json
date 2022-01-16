@@ -30,19 +30,20 @@
 			"cargo": {
 				"args": [
 					"build",
-					"--bin=main",
+					"--bin=enigma",
 					"--package=enigma"
 				],
 				"filter": {
-					"name": "main",
+					"name": "enigma",
 					"kind": "bin"
 				}
 			},
 			"args": [
-				"--use-sample",
-				"--basic-position=ABC",
-				"--message-key=DEF",
-				"--message=Hello world"
+				"--allow-cli-questions"
+				// "--use-sample",
+				// "--basic-position=ABC",
+				// "--message-key=DEF",
+				// "--message=Hello world"
 			],
 			"cwd": "${workspaceFolder}"
 		},

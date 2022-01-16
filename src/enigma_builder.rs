@@ -9,9 +9,9 @@ use crate::rotors::rotor_chain::RotorChain;
 
 #[derive(Debug)]
 pub enum RotorPlacement {
-	Left,
-	Middle,
-	Right
+    Left,
+    Middle,
+    Right,
 }
 impl Display for RotorPlacement {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -23,13 +23,12 @@ impl Display for RotorPlacement {
     }
 }
 
-
 #[derive(Debug)]
 pub enum BuildError {
-	RotorError(RotorPlacement, String),
-	PlugboardError(String),
-	EntryDiskError(String),
-	ReflectorError(String)
+    RotorError(RotorPlacement, String),
+    PlugboardError(String),
+    EntryDiskError(String),
+    ReflectorError(String),
 }
 
 pub struct EnigmaBuilder {
@@ -87,48 +86,55 @@ impl EnigmaBuilder {
     }
 
     pub fn build(&mut self) -> Result<Enigma, BuildError> {
-		if let Err(e) = self.validate_ready_to_build() {
-			return Err(e);
-		}
+        if let Err(e) = self.validate_ready_to_build() {
+            return Err(e);
+        }
 
         let mut plugboard = Plugboard::identity();
         for pc in &self.plugboard_connections {
             if let Err(e) = plugboard.connect(pc.left, pc.right) {
-				return Err(BuildError::PlugboardError(e));
-			}
+                return Err(BuildError::PlugboardError(e));
+            }
         }
 
         let rotor_chain = RotorChain::new(
-        	self.rotor_left.take().unwrap(),
+            self.rotor_left.take().unwrap(),
             self.rotor_middle.take().unwrap(),
-            self.rotor_right.take().unwrap()
+            self.rotor_right.take().unwrap(),
         );
-        Ok(
-			Enigma::new(
-				plugboard,
-				self.entry_disk.take().unwrap(),
-				rotor_chain,
-				self.reflector.take().unwrap()
-        	)
-		)
+        Ok(Enigma::new(
+            plugboard,
+            self.entry_disk.take().unwrap(),
+            rotor_chain,
+            self.reflector.take().unwrap(),
+        ))
     }
 
-	fn validate_ready_to_build(&self) -> Result<(), BuildError> {
-		if let None = self.rotor_left {
-			return Err(BuildError::RotorError(RotorPlacement::Left, "Left rotor is required".into()));
-		}
-		if let None = self.rotor_middle {
-			return Err(BuildError::RotorError(RotorPlacement::Middle, "Middle rotor is required".into()));
-		}
-		if let None = self.rotor_right {
-			return Err(BuildError::RotorError(RotorPlacement::Right, "Right rotor is required".into()));
-		}
-		if let None = self.entry_disk {
-			return Err(BuildError::EntryDiskError("Entry disk is required".into()));
-		}
-		if let None = self.reflector {
-			return Err(BuildError::ReflectorError("Reflector is required".into()));
-		}
-		Ok(())
-	}
+    fn validate_ready_to_build(&self) -> Result<(), BuildError> {
+        if let None = self.rotor_left {
+            return Err(BuildError::RotorError(
+                RotorPlacement::Left,
+                "Left rotor is required".into(),
+            ));
+        }
+        if let None = self.rotor_middle {
+            return Err(BuildError::RotorError(
+                RotorPlacement::Middle,
+                "Middle rotor is required".into(),
+            ));
+        }
+        if let None = self.rotor_right {
+            return Err(BuildError::RotorError(
+                RotorPlacement::Right,
+                "Right rotor is required".into(),
+            ));
+        }
+        if let None = self.entry_disk {
+            return Err(BuildError::EntryDiskError("Entry disk is required".into()));
+        }
+        if let None = self.reflector {
+            return Err(BuildError::ReflectorError("Reflector is required".into()));
+        }
+        Ok(())
+    }
 }

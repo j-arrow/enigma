@@ -18,10 +18,10 @@ impl Plugboard {
 
     pub(crate) fn connect(&mut self, from: char, to: char) -> Result<(), String> {
         if let None = SUPPORTED_ALPHABET.find(from) {
-			return Err(format!(
+            return Err(format!(
                 "Character '{}' is not in supported alphabet: {}",
                 from, SUPPORTED_ALPHABET
-			));
+            ));
         }
         if let None = SUPPORTED_ALPHABET.find(to) {
             return Err(format!(
@@ -32,8 +32,8 @@ impl Plugboard {
 
         if from.eq(&to) {
             if let Err(e) = self.disconnect(from) {
-				return Err(e);
-			}
+                return Err(e);
+            }
             return Ok(());
         }
 
@@ -52,7 +52,7 @@ impl Plugboard {
                 }
             }
         }
-		Ok(())
+        Ok(())
     }
 
     pub(crate) fn disconnect(&mut self, char_to_disconnect: char) -> Result<(), String> {
@@ -70,7 +70,7 @@ impl Plugboard {
             }
             *self.mapping.get_mut(&c).unwrap() = c;
         }
-		Ok(())
+        Ok(())
     }
 
     pub(crate) fn encode_from_right(&self, letter: char) -> u8 {
@@ -95,7 +95,7 @@ pub struct PlugboardConnection {
 
 impl PlugboardConnection {
     pub fn create(character_pair: &str) -> Result<PlugboardConnection, String> {
-		if character_pair.chars().count() != 2 {
+        if character_pair.chars().count() != 2 {
             return Err(format!(
                 "Expected only pairs (2 values) split by comma character (,), but found: {}",
                 character_pair
@@ -176,26 +176,26 @@ mod tests {
     fn error_on_connect_for_unsupported_from_character() {
         let mut plugboard = Plugboard::identity();
         assert_eq!(
-			plugboard.connect('1', 'A'),
-			Err("Character '1' is not in supported alphabet: ABCDEFGHIJKLMNOPQRSTUVWXYZ".into())
-		);
+            plugboard.connect('1', 'A'),
+            Err("Character '1' is not in supported alphabet: ABCDEFGHIJKLMNOPQRSTUVWXYZ".into())
+        );
     }
 
     #[test]
     fn error_on_connect_for_unsupported_to_character() {
         let mut plugboard = Plugboard::identity();
         assert_eq!(
-			plugboard.connect('A', '2'),
-			Err("Character '2' is not in supported alphabet: ABCDEFGHIJKLMNOPQRSTUVWXYZ".into())
-		);
+            plugboard.connect('A', '2'),
+            Err("Character '2' is not in supported alphabet: ABCDEFGHIJKLMNOPQRSTUVWXYZ".into())
+        );
     }
 
     #[test]
     fn error_on_disconnect_for_unsupported_character() {
         let mut plugboard = Plugboard::identity();
         assert_eq!(
-			plugboard.disconnect('3'),
-			Err("Character '3' is not in supported alphabet: ABCDEFGHIJKLMNOPQRSTUVWXYZ".into())
-		);
+            plugboard.disconnect('3'),
+            Err("Character '3' is not in supported alphabet: ABCDEFGHIJKLMNOPQRSTUVWXYZ".into())
+        );
     }
 }

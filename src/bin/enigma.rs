@@ -1,6 +1,10 @@
 use std::{io, process};
 
-use enigma::{entry_disk::EntryDisk, enigma::{EncodingResult, Enigma}, enigma_builder::{BuildError, RotorPlacement}};
+use enigma::{
+    enigma::{EncodingResult, Enigma},
+    enigma_builder::{BuildError, RotorPlacement},
+    entry_disk::EntryDisk,
+};
 use simple_logger::SimpleLogger;
 
 use chrono::Local;
@@ -20,7 +24,7 @@ fn main() {
 
     let args = Arguments::from_args();
 
-	let mut enigma_builder = if args.use_sample {
+    let mut enigma_builder = if args.use_sample {
         EnigmaBuilder::init()
             .entry_disk(EntryDisk::identity())
             .rotor_left(Rotor::enigma_i_wehrmacht_i())
@@ -31,97 +35,114 @@ fn main() {
         EnigmaBuilder::init()
     };
 
-	let mut basic_position = args.basic_position;
-	let mut message_key = args.message_key;
-	let mut message_to_encode = args.message;
+    let mut basic_position = args.basic_position;
+    let mut message_key = args.message_key;
+    let mut message_to_encode = args.message;
 
-	let mut enigma: Option<Enigma> = None;
+    let enigma: Option<Enigma>;
 
-	if !args.allow_cli_questions {
-		let built = enigma_builder.build()
-			.map_err(|build_error| match build_error {
-				BuildError::RotorError(rotor_placement, msg) => format!("{} ({} rotor)", msg, rotor_placement),
-				BuildError::PlugboardError(msg) => msg,
-				BuildError::EntryDiskError(msg) => msg,
-				BuildError::ReflectorError(msg) => msg,
-			});
-		if let Err(err) = built {
-			panic!("Unexpected error: {}", err);
-		}
-		enigma = Some(built.unwrap());
-	} else {
-		let reflector = args.reflector.unwrap_or_else(read_reflector_from_cli);
-		enigma_builder = enigma_builder.reflector(reflector);
+    if !args.allow_cli_questions {
+        let built = enigma_builder
+            .build()
+            .map_err(|build_error| match build_error {
+                BuildError::RotorError(rotor_placement, msg) => {
+                    format!("{} ({} rotor)", msg, rotor_placement)
+                }
+                BuildError::PlugboardError(msg) => msg,
+                BuildError::EntryDiskError(msg) => msg,
+                BuildError::ReflectorError(msg) => msg,
+            });
+        if let Err(err) = built {
+            panic!("Unexpected error: {}", err);
+        }
+        enigma = Some(built.unwrap());
+    } else {
+        let reflector = args.reflector.unwrap_or_else(read_reflector_from_cli);
+        enigma_builder = enigma_builder.reflector(reflector);
 
-		let rotor_left = args.rotor_left.unwrap_or_else(read_left_rotor_from_cli);
-		enigma_builder = enigma_builder.rotor_left(rotor_left);
+        let rotor_left = args.rotor_left.unwrap_or_else(read_left_rotor_from_cli);
+        enigma_builder = enigma_builder.rotor_left(rotor_left);
 
-		let rotor_middle = args.rotor_middle.unwrap_or_else(read_middle_rotor_from_cli);
-		enigma_builder = enigma_builder.rotor_middle(rotor_middle);
+        let rotor_middle = args.rotor_middle.unwrap_or_else(read_middle_rotor_from_cli);
+        enigma_builder = enigma_builder.rotor_middle(rotor_middle);
 
-		let rotor_right = args.rotor_right.unwrap_or_else(read_right_rotor_from_cli);
-		enigma_builder = enigma_builder.rotor_right(rotor_right);
+        let rotor_right = args.rotor_right.unwrap_or_else(read_right_rotor_from_cli);
+        enigma_builder = enigma_builder.rotor_right(rotor_right);
 
-		let plugboard_connections = if args.plugboard_connections.is_empty() {
-			read_plugboard_connections_from_cli()
-		} else {
-			args.plugboard_connections
-				.into_iter()
-				.map(|c| match c {
-					PlugboardConnectionOption::Existing(existing) => existing,
-					PlugboardConnectionOption::None => panic!("Must not happen"),
-				})
-				.collect()
-		};
-		enigma_builder = enigma_builder.plugboard_connections(plugboard_connections);
+        let plugboard_connections = if args.plugboard_connections.is_empty() {
+            read_plugboard_connections_from_cli()
+        } else {
+            args.plugboard_connections
+                .into_iter()
+                .map(|c| match c {
+                    PlugboardConnectionOption::Existing(existing) => existing,
+                    PlugboardConnectionOption::None => panic!("Must not happen"),
+                })
+                .collect()
+        };
+        enigma_builder = enigma_builder.plugboard_connections(plugboard_connections);
 
-		if let None = basic_position {
-			basic_position = Some(read_basic_position_from_cli())
-		}
+        if let None = basic_position {
+            basic_position = Some(read_basic_position_from_cli())
+        }
 
-		if let None = message_key {
-			message_key = Some(read_message_key_from_cli())
-		}
+        if let None = message_key {
+            message_key = Some(read_message_key_from_cli())
+        }
 
-		if let None = message_to_encode {
-			message_to_encode = Some(read_message_to_encode_from_cli())
-		}
+        if let None = message_to_encode {
+            message_to_encode = Some(read_message_to_encode_from_cli())
+        }
 
-		let mut en = enigma_builder.build();
-		while let Err(build_error) = en {
-			println!();
-			match build_error {
-				BuildError::RotorError(rotor_placement, err) => {
-					eprintln!("Rotor ({}) error when building Enigma: {}", rotor_placement, err);
-					match rotor_placement {
-						RotorPlacement::Left => enigma_builder = enigma_builder.rotor_left(read_left_rotor_from_cli()),
-						RotorPlacement::Middle => enigma_builder = enigma_builder.rotor_middle(read_middle_rotor_from_cli()),
-						RotorPlacement::Right => enigma_builder = enigma_builder.rotor_right(read_right_rotor_from_cli()),
-					}
-					en = enigma_builder.build();
-				},
-				BuildError::PlugboardError(err) => {
-					eprintln!("Plugboard error when building Enigma: {}", err);
-					enigma_builder = enigma_builder.plugboard_connections(read_plugboard_connections_from_cli());
-					en = enigma_builder.build();
-				},
-				BuildError::EntryDiskError(err) => {
-					todo!("Entry disk reading from CLI is not implemented yet: {}", err);
-				},
-				BuildError::ReflectorError(err) => {
-					eprintln!("Reflector error when building Enigma: {}", err);
-					enigma_builder = enigma_builder.reflector(read_reflector_from_cli());
-					en = enigma_builder.build();
-				},
-			}
-		}
-		enigma = Some(en.unwrap());
-	}
+        let mut en = enigma_builder.build();
+        while let Err(build_error) = en {
+            println!();
+            match build_error {
+                BuildError::RotorError(rotor_placement, err) => {
+                    eprintln!(
+                        "Rotor ({}) error when building Enigma: {}",
+                        rotor_placement, err
+                    );
+                    match rotor_placement {
+                        RotorPlacement::Left => {
+                            enigma_builder = enigma_builder.rotor_left(read_left_rotor_from_cli())
+                        }
+                        RotorPlacement::Middle => {
+                            enigma_builder =
+                                enigma_builder.rotor_middle(read_middle_rotor_from_cli())
+                        }
+                        RotorPlacement::Right => {
+                            enigma_builder = enigma_builder.rotor_right(read_right_rotor_from_cli())
+                        }
+                    }
+                    en = enigma_builder.build();
+                }
+                BuildError::PlugboardError(err) => {
+                    eprintln!("Plugboard error when building Enigma: {}", err);
+                    enigma_builder =
+                        enigma_builder.plugboard_connections(read_plugboard_connections_from_cli());
+                    en = enigma_builder.build();
+                }
+                BuildError::EntryDiskError(err) => {
+                    todo!(
+                        "Entry disk reading from CLI is not implemented yet: {}",
+                        err
+                    );
+                }
+                BuildError::ReflectorError(err) => {
+                    eprintln!("Reflector error when building Enigma: {}", err);
+                    enigma_builder = enigma_builder.reflector(read_reflector_from_cli());
+                    en = enigma_builder.build();
+                }
+            }
+        }
+        enigma = Some(en.unwrap());
+    }
 
-	let basic_position = basic_position.unwrap();
-	let message_key = message_key.unwrap();
+    let basic_position = basic_position.unwrap();
+    let message_key = message_key.unwrap();
 
-	let mut enigma = enigma.unwrap();
+    let mut enigma = enigma.unwrap();
 
     let mut encoding_result = enigma.encode(
         basic_position.clone(),
@@ -129,23 +150,23 @@ fn main() {
         message_to_encode.unwrap(),
     );
 
-	while let Err(err) = encoding_result {
-		eprintln!("Failed to encode the message due to error:");
-		eprintln!("{}", err);
-		println!("Provide new message to encode.");
+    while let Err(err) = encoding_result {
+        eprintln!("Failed to encode the message due to error:");
+        eprintln!("{}", err);
+        println!("Provide new message to encode.");
 
-		message_to_encode = Some(read(
+        message_to_encode = Some(read(
             "Message to encode",
             "Enter the message that should be encoded using settings provided earlier (max 500 characters)",
             MESSAGE_PARSER
         ));
 
-		encoding_result = enigma.encode(
-			basic_position.clone(),
-			message_key.clone(),
-			message_to_encode.unwrap(),
-		);
-	}
+        encoding_result = enigma.encode(
+            basic_position.clone(),
+            message_key.clone(),
+            message_to_encode.unwrap(),
+        );
+    }
 
     let message = Message::compose(
         Local::now(),
@@ -159,31 +180,31 @@ fn main() {
 }
 
 fn read_reflector_from_cli() -> Reflector {
-	read("UKW (reflector)", "Available: A, B or C", REFLECTOR_PARSER)
+    read("UKW (reflector)", "Available: A, B or C", REFLECTOR_PARSER)
 }
 fn read_left_rotor_from_cli() -> Rotor {
-	read(
-		"Welzelage I (left rotor)",
-		"Available: I, II, III, IV, V",
-		ROTOR_PARSER,
-	)
+    read(
+        "Welzelage I (left rotor)",
+        "Available: I, II, III, IV, V",
+        ROTOR_PARSER,
+    )
 }
 fn read_middle_rotor_from_cli() -> Rotor {
-	read(
-		"Welzelage II (middle rotor)",
-		"Available: I, II, III, IV, V",
-		ROTOR_PARSER,
-	)
+    read(
+        "Welzelage II (middle rotor)",
+        "Available: I, II, III, IV, V",
+        ROTOR_PARSER,
+    )
 }
 fn read_right_rotor_from_cli() -> Rotor {
-	read(
-		"Welzelage III (right rotor)",
-		"Available: I, II, III, IV, V",
-		ROTOR_PARSER,
-	)
+    read(
+        "Welzelage III (right rotor)",
+        "Available: I, II, III, IV, V",
+        ROTOR_PARSER,
+    )
 }
 fn read_plugboard_connections_from_cli() -> Vec<PlugboardConnection> {
-	read(
+    read(
 		"Steckerverbindungen (plugboard)",
 		format!(
 			"(Optional, press 'enter' key if not required) Enter pairs of characters that should be connected in plugboard (pairs must be split by comma), for example: AE,BG,GH. Allowed characters: {}",
@@ -194,29 +215,29 @@ fn read_plugboard_connections_from_cli() -> Vec<PlugboardConnection> {
 	)
 }
 fn read_basic_position_from_cli() -> String {
-	read(
-		"Grundstellung (random basic position)",
-		format!(
-			"Random basic position consist of three letters from {}, for example: EGW",
-			SUPPORTED_ALPHABET
-		)
-		.as_str(),
-		BASIC_POSITION_PARSER,
-	)
+    read(
+        "Grundstellung (random basic position)",
+        format!(
+            "Random basic position consist of three letters from {}, for example: EGW",
+            SUPPORTED_ALPHABET
+        )
+        .as_str(),
+        BASIC_POSITION_PARSER,
+    )
 }
 fn read_message_key_from_cli() -> String {
-	read(
-		"Spruchschlussel (random message key)",
-		format!(
-			"Random message key consist of three letters from {}, for example: HIB",
-			SUPPORTED_ALPHABET
-		)
-		.as_str(),
-		MESSAGE_KEY_PARSER,
-	)
+    read(
+        "Spruchschlussel (random message key)",
+        format!(
+            "Random message key consist of three letters from {}, for example: HIB",
+            SUPPORTED_ALPHABET
+        )
+        .as_str(),
+        MESSAGE_KEY_PARSER,
+    )
 }
 fn read_message_to_encode_from_cli() -> String {
-	read(
+    read(
 		"Message to encode",
 		"Enter the message that should be encoded using settings provided earlier (max 500 characters)",
 		MESSAGE_PARSER
@@ -309,14 +330,14 @@ mod tests {
             )
         }
 
-		#[test]
-		fn too_long_message_to_process() {
-			let result = MESSAGE_PARSER(&"a".repeat(501));
-			assert_eq!(
-				result.unwrap_err(),
-				"Input length exceeded allowed limit of 500, as it contains 501 characters"
-			)
-		}
+        #[test]
+        fn too_long_message_to_process() {
+            let result = MESSAGE_PARSER(&"a".repeat(501));
+            assert_eq!(
+                result.unwrap_err(),
+                "Input length exceeded allowed limit of 500, as it contains 501 characters"
+            )
+        }
     }
 
     mod cli_arguments {
@@ -413,18 +434,18 @@ const ROTOR_PARSER: fn(&str) -> Result<Rotor, String> = |input: &str| {
 
 #[derive(PartialEq, Debug)]
 enum PlugboardConnectionOption {
-	Existing(PlugboardConnection),
-	None
+    Existing(PlugboardConnection),
+    None,
 }
 
-const PLUGBOARD_CONNECTION_PARSER: fn(&str) -> Result<PlugboardConnectionOption, String> = |input: &str| {
-	if input.chars().count() == 0 {
-		Ok(PlugboardConnectionOption::None)
-	} else {
-		PlugboardConnection::create(input)
-			.map(|con| PlugboardConnectionOption::Existing(con))
-	}
-};
+const PLUGBOARD_CONNECTION_PARSER: fn(&str) -> Result<PlugboardConnectionOption, String> =
+    |input: &str| {
+        if input.chars().count() == 0 {
+            Ok(PlugboardConnectionOption::None)
+        } else {
+            PlugboardConnection::create(input).map(|con| PlugboardConnectionOption::Existing(con))
+        }
+    };
 
 const PLUGBOARD_PARSER: fn(&str) -> Result<Vec<PlugboardConnection>, String> = |input: &str| {
     let mut valid: Vec<PlugboardConnection> = vec![];
@@ -432,9 +453,9 @@ const PLUGBOARD_PARSER: fn(&str) -> Result<Vec<PlugboardConnection>, String> = |
     for pair in input.split(',') {
         let result = PLUGBOARD_CONNECTION_PARSER(pair);
         if let Ok(connection) = result {
-			if let PlugboardConnectionOption::Existing(con) = connection {
-            	valid.push(con);
-			}
+            if let PlugboardConnectionOption::Existing(con) = connection {
+                valid.push(con);
+            }
         } else {
             errors.push(result.err().unwrap());
         }
@@ -489,14 +510,15 @@ const MESSAGE_PARSER: fn(&str) -> Result<String, String> = |input: &str| {
     if input.len() > allowed_limit {
         errors.push(format!(
             "Input length exceeded allowed limit of {}, as it contains {} characters",
-            allowed_limit, input.len()
+            allowed_limit,
+            input.len()
         ));
     }
 
     for c in input.chars() {
         if c.is_whitespace() {
             // ignore, whitespaces for now - those will be handled during encoding
-			string_vector.push(String::from(" "));
+            string_vector.push(String::from(" "));
         } else {
             let uppercase = c.to_uppercase().to_string();
             if SUPPORTED_ALPHABET.contains(&uppercase) {
@@ -529,14 +551,14 @@ where
         if v.eq("exit") {
             process::exit(0);
         }
-		match read_value_parser(v) {
-			Ok(x) => return x,
-			Err(err) => {
-				eprintln!("| {}", err);
-				eprintln!("| Write 'exit' to quit or provide valid value");
-				eprintln!("{}", formatted_info_to_print);
-			},
-		};
+        match read_value_parser(v) {
+            Ok(x) => return x,
+            Err(err) => {
+                eprintln!("| {}", err);
+                eprintln!("| Write 'exit' to quit or provide valid value");
+                eprintln!("{}", formatted_info_to_print);
+            }
+        };
     }
 }
 
