@@ -39,7 +39,7 @@
 				}
 			},
 			"args": [
-				"--allow-cli-questions"
+				// "--allow-cli-questions"
 				// "--use-sample",
 				// "--basic-position=ABC",
 				// "--message-key=DEF",
